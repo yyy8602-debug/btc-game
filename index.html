@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>BTC 韭菜生存戰</title>
+    <title>Trading Simulator</title>
     <style>
         :root {
             --up-color: #00c087;
@@ -15,16 +15,20 @@
             --accent: #f0b90b;
         }
 
-        * { box-sizing: border-box; -webkit-tap-highlight-color: transparent; outline: none; }
+        * { 
+            box-sizing: border-box; 
+            -webkit-tap-highlight-color: transparent; 
+            outline: none; 
+        }
         
-        /* 終極防跳動解法：針對 Safari 鎖死視窗 */
         html, body {
             margin: 0;
             padding: 0;
-            width: 100%;
-            height: 100%; /* 舊版備用 */
-            height: 100dvh; /* 動態視口高度，防止 Safari 網址列縮放造成跳動 */
-            position: fixed; /* 鎖死畫面，絕對不允許滾動或回彈 */
+            position: absolute;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
             overflow: hidden;
             background-color: var(--bg-color);
             color: var(--text-main);
@@ -33,7 +37,6 @@
             flex-direction: column;
         }
 
-        /* 頂部資產看板 */
         .dashboard {
             background: var(--card-bg);
             padding: 15px;
@@ -48,15 +51,21 @@
         .label { font-size: 11px; color: var(--text-dim); }
         .value { font-size: 16px; font-weight: bold; font-variant-numeric: tabular-nums; }
 
-        /* K 線圖區域 */
         #chart-container {
-            flex-grow: 1;
-            flex-shrink: 1; /* 允許圖表區塊伸縮 */
-            min-height: 0; /* 防止 Flexbox 溢出 */
+            flex: 1 1 0%;
             position: relative;
             background: var(--bg-color);
+            overflow: hidden;
         }
-        canvas { width: 100%; height: 100%; display: block; }
+
+        canvas { 
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%; 
+            height: 100%; 
+            display: block; 
+        }
 
         #price-tag {
             position: absolute;
@@ -66,17 +75,16 @@
             font-size: 12px;
             border-radius: 4px;
             pointer-events: none;
+            z-index: 2;
         }
 
-        /* 底部控制區 - 暴力墊高，保證不被遮擋 */
         .controls {
-            padding: 15px 20px 50px 20px; /* 底部直接墊高 50px，把按鈕強制往上推 */
+            padding: 15px 20px 80px 20px;
             background: var(--card-bg);
             border-top: 1px solid #333;
-            flex-shrink: 0; /* 鎖定控制區高度，絕對不允許被壓縮 */
+            flex-shrink: 0;
         }
 
-        /* 滑桿樣式 */
         .slider-container {
             margin-bottom: 20px;
             display: flex;
@@ -93,7 +101,7 @@
             display: grid;
             grid-template-columns: 1.2fr 1.2fr 1fr;
             gap: 12px;
-            height: 60px; /* 固定按鈕高度，防止跳動 */
+            height: 60px;
         }
 
         button {
@@ -103,7 +111,7 @@
             font-weight: bold;
             color: white;
             cursor: pointer;
-            height: 100%; /* 填滿固定高度 */
+            height: 100%;
         }
         
         button:active { transform: scale(0.95); opacity: 0.8; }
@@ -113,9 +121,8 @@
         .btn-sell { background-color: var(--down-color); }
         .btn-wait { background-color: #474d57; }
 
-        /* 結束彈窗 */
         #overlay {
-            position: fixed;
+            position: absolute;
             top: 0; left: 0; width: 100%; height: 100%;
             background: rgba(0,0,0,0.95);
             display: none;
@@ -170,22 +177,21 @@
 
     <div class="controls">
         <div class="slider-container">
-            <span class="label">單次買入:</span>
+            <span class="label">買入金額:</span>
             <input type="range" id="buyAmountSlider" min="20" max="500" step="10" value="200" oninput="updateSliderLabel(this.value)">
             <span id="sliderLabel" class="value">200U</span>
         </div>
         <div class="btn-group">
             <button class="btn-buy" onclick="action('buy')">買入</button>
-            <button class="btn-sell" id="sellBtn" onclick="action('sell')" disabled>全平</button>
+            <button class="btn-sell" id="sellBtn" onclick="action('sell')" disabled>平倉</button>
             <button class="btn-wait" onclick="action('wait')">觀望</button>
         </div>
     </div>
 
     <div id="overlay">
-        <div id="result-emoji" style="font-size: 80px;">🚀</div>
         <div id="result-text" style="font-size: 28px; font-weight: bold; margin: 20px 0;"></div>
         <p id="result-detail" style="font-size: 18px; color: var(--text-dim); line-height: 1.6; white-space: pre-wrap;"></p>
-        <button onclick="resetGame()" style="background: var(--accent); color: black; width: 220px; padding: 15px; margin-top: 30px;">這把不算，重來！</button>
+        <button onclick="resetGame()" style="background: var(--accent); color: black; width: 220px; padding: 15px; margin-top: 30px;">重新開始</button>
     </div>
 
 <script>
@@ -197,16 +203,15 @@
         if (bgmOsc) return;
         bgmOsc = audioCtx.createOscillator();
         bgmGain = audioCtx.createGain();
-        bgmOsc.type = 'triangle';
-        bgmOsc.frequency.setValueAtTime(60, audioCtx.currentTime);
-        bgmGain.gain.setValueAtTime(0.02, audioCtx.currentTime);
+        bgmOsc.type = 'sine';
+        bgmOsc.frequency.setValueAtTime(150, audioCtx.currentTime);
+        bgmGain.gain.setValueAtTime(0.08, audioCtx.currentTime);
         bgmOsc.connect(bgmGain);
         bgmGain.connect(audioCtx.destination);
         bgmOsc.start();
     }
 
     function playSound(type) {
-        if (audioCtx.state === 'suspended') audioCtx.resume();
         const osc = audioCtx.createOscillator();
         const g = audioCtx.createGain();
         osc.connect(g); g.connect(audioCtx.destination);
@@ -271,7 +276,6 @@
     const ctx = canvas.getContext('2d');
 
     function resizeCanvas() {
-        // 防止 resize 時產生跳動，只改變內部寬高
         const rect = canvas.parentElement.getBoundingClientRect();
         canvas.width = rect.width;
         canvas.height = rect.height;
@@ -318,8 +322,12 @@
         tag.innerText = lastPrice.toFixed(1);
     }
 
-    function action(type) {
+    async function action(type) {
+        if (audioCtx.state === 'suspended') {
+            await audioCtx.resume();
+        }
         initBGM();
+        
         const price = marketData[currentStep-1].close;
         const buyAmount = parseInt(document.getElementById('buyAmountSlider').value);
 
@@ -331,7 +339,7 @@
                 balance -= buyAmount;
                 playSound('buy');
             } else {
-                showMsg("錢不夠啦！"); playSound('error'); return;
+                showMsg("餘額不足"); playSound('error'); return;
             }
         } else if (type === 'sell') {
             if (btcPosition > 0) {
@@ -339,7 +347,7 @@
                 btcPosition = 0; avgCost = 0;
                 playSound('sell');
             } else {
-                showMsg("沒幣怎麼賣？"); playSound('error'); return;
+                showMsg("當前無持倉"); playSound('error'); return;
             }
         }
 
@@ -369,7 +377,7 @@
         pnlEl.style.color = pnl >= 0 ? 'var(--up-color)' : 'var(--down-color)';
         document.getElementById('sellBtn').disabled = (btcPosition <= 0);
         
-        if(bgmOsc) bgmOsc.frequency.setTargetAtTime(60 + (pnl/10), audioCtx.currentTime, 0.5);
+        if(bgmOsc) bgmOsc.frequency.setTargetAtTime(150 + (pnl/5), audioCtx.currentTime, 0.5);
     }
 
     function showMsg(t) {
@@ -383,21 +391,18 @@
         const final = balance;
         const txt = document.getElementById('result-text');
         const detail = document.getElementById('result-detail');
-        const emoji = document.getElementById('result-emoji');
         
         const profit = final - 1000;
         const profitPct = (profit / 10).toFixed(2);
 
         if (profit > 0) {
-            emoji.innerText = "💰";
-            txt.innerText = "財富自由！今晚吃大餐";
+            txt.innerText = "結算：獲利";
             txt.style.color = "var(--up-color)";
         } else {
-            emoji.innerText = "🧼";
-            txt.innerText = "破產了，去洗碗吧...";
+            txt.innerText = "結算：虧損";
             txt.style.color = "var(--down-color)";
         }
-        detail.innerText = `最終資產：${final.toFixed(2)} USDT\n總盈虧：${profitPct}%\n(最後一根已自動為妳全平)`;
+        detail.innerText = `最終資產：${final.toFixed(2)} USDT\n總盈虧：${profitPct}%\n(已強制平倉)`;
     }
 
     window.onload = () => {
