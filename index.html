@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>BTC 韭菜生存戰：終極版 🚀</title>
+    <title>BTC 韭菜生存戰</title>
     <style>
         :root {
             --up-color: #00c087;
@@ -17,15 +17,20 @@
 
         * { box-sizing: border-box; -webkit-tap-highlight-color: transparent; outline: none; }
         
-        body {
-            font-family: -apple-system, sans-serif;
+        /* 終極防跳動解法：針對 Safari 鎖死視窗 */
+        html, body {
+            margin: 0;
+            padding: 0;
+            width: 100%;
+            height: 100%; /* 舊版備用 */
+            height: 100dvh; /* 動態視口高度，防止 Safari 網址列縮放造成跳動 */
+            position: fixed; /* 鎖死畫面，絕對不允許滾動或回彈 */
+            overflow: hidden;
             background-color: var(--bg-color);
             color: var(--text-main);
-            margin: 0;
+            font-family: -apple-system, sans-serif;
             display: flex;
             flex-direction: column;
-            height: 100vh;
-            overflow: hidden;
         }
 
         /* 頂部資產看板 */
@@ -36,7 +41,7 @@
             grid-template-columns: 1fr 1fr;
             gap: 10px;
             border-bottom: 1px solid #333;
-            z-index: 10;
+            flex-shrink: 0;
         }
 
         .stat-box { display: flex; flex-direction: column; }
@@ -46,6 +51,8 @@
         /* K 線圖區域 */
         #chart-container {
             flex-grow: 1;
+            flex-shrink: 1; /* 允許圖表區塊伸縮 */
+            min-height: 0; /* 防止 Flexbox 溢出 */
             position: relative;
             background: var(--bg-color);
         }
@@ -61,14 +68,12 @@
             pointer-events: none;
         }
 
-        /* 底部控制區 - 針對 Safari 網址列優化 */
+        /* 底部控制區 - 暴力墊高，保證不被遮擋 */
         .controls {
-            padding: 15px 20px;
+            padding: 15px 20px 50px 20px; /* 底部直接墊高 50px，把按鈕強制往上推 */
             background: var(--card-bg);
-            /* 核心修正：增加底部間距，並加上 iOS 安全區域變數 */
-            padding-bottom: calc(40px + env(safe-area-inset-bottom)); 
             border-top: 1px solid #333;
-            z-index: 10;
+            flex-shrink: 0; /* 鎖定控制區高度，絕對不允許被壓縮 */
         }
 
         /* 滑桿樣式 */
@@ -88,17 +93,17 @@
             display: grid;
             grid-template-columns: 1.2fr 1.2fr 1fr;
             gap: 12px;
-            min-height: 70px;
+            height: 60px; /* 固定按鈕高度，防止跳動 */
         }
 
         button {
             border: none;
-            padding: 15px 0;
             border-radius: 12px;
             font-size: 18px;
             font-weight: bold;
             color: white;
             cursor: pointer;
+            height: 100%; /* 填滿固定高度 */
         }
         
         button:active { transform: scale(0.95); opacity: 0.8; }
@@ -184,7 +189,6 @@
     </div>
 
 <script>
-    // --- 音效與 BGM 引擎 ---
     const audioCtx = new (window.AudioContext || window.webkitAudioContext)();
     let bgmOsc = null;
     let bgmGain = null;
@@ -226,7 +230,6 @@
         }
     }
 
-    // --- 遊戲邏輯 ---
     let marketData = [];
     let currentStep = 10;
     let balance = 1000;
@@ -239,7 +242,7 @@
         let price = 50000 + Math.random() * 20000;
         for (let i = 0; i < 100; i++) {
             let open = price;
-            let vol = (Math.random() > 0.8) ? 0.04 : 0.01; // 模擬極高波動
+            let vol = (Math.random() > 0.8) ? 0.04 : 0.01; 
             let change = open * vol * (Math.random() - 0.5);
             let close = open + change;
             data.push({ open, close, high: Math.max(open, close) + open*0.002, low: Math.min(open, close) - open*0.002 });
@@ -259,8 +262,6 @@
         btcPosition = 0;
         avgCost = 0;
         document.getElementById('overlay').style.display = 'none';
-        
-        // 確保視窗縮放正確重繪
         resizeCanvas();
         updateUI();
         draw();
@@ -270,8 +271,10 @@
     const ctx = canvas.getContext('2d');
 
     function resizeCanvas() {
-        canvas.width = canvas.parentElement.clientWidth;
-        canvas.height = canvas.parentElement.clientHeight;
+        // 防止 resize 時產生跳動，只改變內部寬高
+        const rect = canvas.parentElement.getBoundingClientRect();
+        canvas.width = rect.width;
+        canvas.height = rect.height;
     }
 
     window.addEventListener('resize', () => {
@@ -282,7 +285,7 @@
     function draw() {
         const w = canvas.width;
         const h = canvas.height;
-        if(w === 0 || h === 0) return; // 避免未載入完成時報錯
+        if(w === 0 || h === 0) return;
 
         const displayCount = 30;
         const visibleData = marketData.slice(Math.max(0, currentStep - displayCount), currentStep);
@@ -297,13 +300,11 @@
             const getY = (p) => h - ((p - minP) / range) * h;
             ctx.fillStyle = d.close >= d.open ? '#00c087' : '#ff3b30';
             
-            // 畫實體
             const bodyTop = getY(Math.max(d.open, d.close));
             const bodyBottom = getY(Math.min(d.open, d.close));
             const bodyHeight = Math.max(1, bodyBottom - bodyTop);
             ctx.fillRect(x, bodyTop, cW - 4, bodyHeight);
             
-            // 畫上下影線
             ctx.strokeStyle = ctx.fillStyle;
             ctx.beginPath(); 
             ctx.moveTo(x + cW/2 - 2, getY(d.high)); 
@@ -344,7 +345,6 @@
 
         currentStep++;
         if (currentStep >= TOTAL_STEPS + 10) {
-            // 強制平倉機制
             if (btcPosition > 0) {
                 balance += btcPosition * marketData[currentStep-1].close;
                 btcPosition = 0;
@@ -369,7 +369,6 @@
         pnlEl.style.color = pnl >= 0 ? 'var(--up-color)' : 'var(--down-color)';
         document.getElementById('sellBtn').disabled = (btcPosition <= 0);
         
-        // 讓 BGM 頻率隨資產輕微變化
         if(bgmOsc) bgmOsc.frequency.setTargetAtTime(60 + (pnl/10), audioCtx.currentTime, 0.5);
     }
 
@@ -401,9 +400,7 @@
         detail.innerText = `最終資產：${final.toFixed(2)} USDT\n總盈虧：${profitPct}%\n(最後一根已自動為妳全平)`;
     }
 
-    // 啟動遊戲
     window.onload = () => {
-        // 延遲一點點確保 DOM 算好尺寸
         setTimeout(resetGame, 100); 
     };
 </script>
