@@ -3,162 +3,179 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>單車摩托爭奪戰</title>
+    <title>韭菜生存戰：合約模擬器</title>
     <style>
         :root {
-            --up-color: #00c087;
-            --down-color: #ff3b30;
-            --bg-color: #0f141a;
-            --card-bg: #1e2329;
-            --text-main: #eaecef;
-            --text-dim: #848e9c;
-            --accent: #f0b90b;
+            --up-color: #00c087; --down-color: #ff3b30; --bg-color: #0f141a;
+            --card-bg: #1e2329; --text-main: #eaecef; --text-dim: #848e9c; --accent: #f0b90b;
         }
+        * { box-sizing: border-box; -webkit-tap-highlight-color: transparent; outline: none; touch-action: manipulation; -webkit-user-select: none; user-select: none; }
+        html, body { margin: 0; padding: 0; position: absolute; top: 0; left: 0; right: 0; bottom: 0; overflow: hidden; background-color: var(--bg-color); color: var(--text-main); font-family: "Courier New", Courier, monospace, sans-serif; display: flex; flex-direction: column; }
 
-        * { 
-            box-sizing: border-box; 
-            -webkit-tap-highlight-color: transparent; 
-            outline: none; 
-            touch-action: manipulation;
-            -webkit-user-select: none;
-            user-select: none;
-        }
-        
-        html, body {
-            margin: 0; padding: 0; position: absolute;
-            top: 0; left: 0; right: 0; bottom: 0;
-            overflow: hidden; background-color: var(--bg-color);
-            color: var(--text-main);
-            font-family: "Courier New", Courier, monospace, -apple-system, sans-serif;
-            display: flex; flex-direction: column;
-        }
-
-        .dashboard {
-            background: var(--card-bg); padding: 10px 15px;
-            display: grid; grid-template-columns: 1fr 1fr 45px;
-            gap: 8px; border-bottom: 1px solid #333;
-            flex-shrink: 0; align-items: center;
-        }
-
+        .dashboard { background: var(--card-bg); padding: 10px 15px; display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 8px 12px; border-bottom: 1px solid #333; flex-shrink: 0; align-items: center; }
         .stat-box { display: flex; flex-direction: column; }
         .label { font-size: 10px; color: var(--text-dim); font-weight: bold;}
-        .value { font-size: 14px; font-weight: bold; font-variant-numeric: tabular-nums; }
-
-        #mute-btn {
-            background: #333; border: 1px solid #555; color: white;
-            font-size: 16px; width: 40px; height: 40px; border-radius: 8px;
-            display: flex; justify-content: center; align-items: center; cursor: pointer;
-        }
+        .value { font-size: 14px; font-weight: bold; font-variant-numeric: tabular-nums; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+        #mute-btn { background: #333; border: 1px solid #555; color: white; font-size: 14px; width: 36px; height: 36px; border-radius: 8px; display: flex; justify-content: center; align-items: center; cursor: pointer; margin-left: auto; justify-self: end;}
 
         #chart-container { flex: 1 1 0%; position: relative; background: var(--bg-color); overflow: hidden; }
         canvas { position: absolute; top: 0; left: 0; width: 100%; height: 100%; display: block; }
+        #price-tag { position: absolute; right: 5px; background: rgba(255,255,255,0.1); padding: 2px 5px; font-size: 12px; border-radius: 4px; pointer-events: none; z-index: 2; }
+        
+        #alert-box { position: absolute; top: 10px; left: 50%; transform: translateX(-50%); background: rgba(255,59,48,0.9); padding: 5px 15px; border-radius: 20px; font-weight: bold; font-size: 12px; display: none; z-index: 10; border: 1px solid white; animation: pulse 1s infinite; }
+        @keyframes pulse { 0% { transform: translateX(-50%) scale(1); } 50% { transform: translateX(-50%) scale(1.1); } 100% { transform: translateX(-50%) scale(1); } }
 
-        #price-tag {
-            position: absolute; right: 5px; background: rgba(255,255,255,0.1);
-            padding: 2px 5px; font-size: 12px; border-radius: 4px; pointer-events: none; z-index: 2;
-        }
-
-        .controls { padding: 15px 20px 60px 20px; background: var(--card-bg); border-top: 1px solid #333; flex-shrink: 0; }
+        .controls { padding: 15px 15px 40px 15px; background: var(--card-bg); border-top: 1px solid #333; flex-shrink: 0; }
         .slider-container { margin-bottom: 15px; display: flex; align-items: center; justify-content: space-between; }
         input[type=range] { flex-grow: 1; margin: 0 15px; accent-color: var(--accent); }
-
-        .btn-group { display: grid; grid-template-columns: 1.2fr 1.2fr 1fr; gap: 12px; height: 60px; }
-        button { border: none; border-radius: 12px; font-size: 18px; font-weight: bold; color: white; cursor: pointer; height: 100%; }
+        .btn-group { display: grid; grid-template-columns: 1fr 1fr 1fr 1fr; gap: 8px; height: 50px; }
+        .btn-group.no-short { grid-template-columns: 1.5fr 1fr 1fr; }
+        button { border: none; border-radius: 8px; font-size: 16px; font-weight: bold; color: white; cursor: pointer; height: 100%; padding: 0 5px;}
         button:active { transform: scale(0.95); opacity: 0.8; }
         button:disabled { opacity: 0.2; filter: grayscale(1); cursor: not-allowed; }
-
-        .btn-buy { background-color: var(--up-color); }
-        .btn-sell { background-color: var(--down-color); }
+        .btn-long { background-color: var(--up-color); } 
+        .btn-short { background-color: var(--down-color); } 
+        .btn-closeAll { background-color: #d97706; }
         .btn-wait { background-color: #474d57; }
 
-        .fullscreen-overlay {
-            position: absolute; top: 0; left: 0; width: 100%; height: 100%;
-            background: var(--bg-color); display: flex; flex-direction: column;
-            justify-content: center; align-items: center; z-index: 100;
-            text-align: center; padding: 20px; overflow-y: auto;
-        }
-
-        #start-screen { background: rgba(15, 20, 26, 0.98); }
-        .tutorial-box {
-            background: var(--card-bg); border: 2px solid #333; padding: 15px;
-            border-radius: 10px; text-align: left; margin-bottom: 20px; width: 100%; max-width: 350px;
-        }
-        .tutorial-box h3 { margin: 0 0 10px 0; color: var(--accent); font-size: 18px; text-align: center;}
-        .tutorial-box p { margin: 5px 0; font-size: 13px; line-height: 1.5; color: #ccc;}
-        .tutorial-box span { color: white; font-weight: bold; }
+        .fullscreen-overlay { position: absolute; top: 0; left: 0; width: 100%; height: 100%; background: var(--bg-color); display: flex; flex-direction: column; justify-content: flex-start; align-items: center; z-index: 100; text-align: center; padding: 40px 20px 20px 20px; overflow-y: auto; }
+        #start-screen { background: rgba(15, 20, 26, 0.98); justify-content: center; padding-top: 20px;}
+        
+        .intro-box { background: rgba(240, 185, 11, 0.1); border: 1px solid var(--accent); padding: 12px; border-radius: 8px; text-align: left; width: 100%; max-width: 350px; margin-bottom: 15px; }
+        .intro-box p { margin: 4px 0; font-size: 12px; color: #ddd; line-height: 1.4; }
+        .intro-box span { color: var(--accent); font-weight: bold; }
 
         .setup-group { width: 100%; max-width: 350px; margin-bottom: 20px; text-align: left;}
-        .setup-label { color: var(--accent); font-weight: bold; margin-bottom: 10px; display: block;}
+        .setup-label { color: var(--accent); font-weight: bold; margin-bottom: 8px; display: block; font-size: 13px;}
         .cap-btn-group { display: flex; gap: 8px; margin-bottom: 15px;}
-        .cap-btn { flex: 1; padding: 10px; background: #333; border: 2px solid transparent; border-radius: 8px; color: white; font-weight: bold; font-family: inherit; font-size: 12px; }
+        .cap-btn { flex: 1; padding: 8px; background: #333; border: 2px solid transparent; border-radius: 6px; color: white; font-weight: bold; font-family: inherit; font-size: 12px; cursor: pointer;}
         .cap-btn.active { border-color: var(--accent); background: #444; }
 
-        #msg-box {
-            position: absolute; top: 25%; left: 50%; transform: translateX(-50%);
-            background: #ff3b30; padding: 10px 20px; border-radius: 20px;
-            display: none; z-index: 50; font-weight: bold; white-space: nowrap;
-        }
+        .toggle-container { display: flex; justify-content: space-between; align-items: center; background: #222; padding: 8px 12px; border-radius: 8px; margin-bottom: 15px; border: 1px solid #444;}
+        .toggle-label { font-size: 13px; font-weight: bold; }
+        .switch { position: relative; display: inline-block; width: 40px; height: 22px; }
+        .switch input { opacity: 0; width: 0; height: 0; }
+        .slider { position: absolute; cursor: pointer; top: 0; left: 0; right: 0; bottom: 0; background-color: #555; transition: .3s; border-radius: 22px; }
+        .slider:before { position: absolute; content: ""; height: 16px; width: 16px; left: 3px; bottom: 3px; background-color: white; transition: .3s; border-radius: 50%; }
+        input:checked + .slider { background-color: var(--accent); }
+        input:checked + .slider:before { transform: translateX(18px); }
+
+        #msg-box { position: absolute; top: 30%; left: 50%; transform: translateX(-50%); background: #ff3b30; padding: 10px 20px; border-radius: 20px; display: none; z-index: 50; font-weight: bold; white-space: nowrap; }
+
+        #lb-modal { position: absolute; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.95); display: none; flex-direction: column; justify-content: center; align-items: center; z-index: 200; padding: 20px; }
+        .lb-card { background: var(--card-bg); padding: 20px; border-radius: 10px; width: 100%; max-width: 350px; border: 1px solid var(--accent); }
+        .lb-row { display: grid; grid-template-columns: 1fr 2fr 1.5fr; padding: 10px 0; border-bottom: 1px solid #333; font-size: 14px; align-items: center; text-align: left;}
+        .lb-row span:last-child { font-weight: bold; text-align: right; }
+        .lb-header { font-weight: bold; color: var(--text-dim); font-size: 12px; border-bottom: 2px solid #333; padding-bottom: 5px; }
+
+        .devil-whisper { margin-top: 15px; font-size: 12px; color: var(--text-dim); font-style: italic; max-width: 280px; line-height: 1.5; }
     </style>
 </head>
 <body>
 
     <div class="dashboard">
-        <div class="stat-box"><div class="label" id="coin-label">餘額 (U)</div><div id="balance" class="value">0.00</div></div>
-        <div class="stat-box"><div class="label">持倉數量</div><div id="position" class="value">0.0000</div></div>
+        <div class="stat-box"><div class="label">可用餘額(U)</div><div id="balance" class="value">0.00</div></div>
+        <div class="stat-box"><div class="label" style="color:var(--up-color);">做多持倉</div><div id="long-pos" class="value">0.0000</div></div>
+        <div class="stat-box" id="dash-short"><div class="label" style="color:var(--down-color);">做空持倉</div><div id="short-pos" class="value">0.0000</div></div>
+        
+        <div class="stat-box"><div class="label">總資產(U)</div><div id="total-equity" class="value" style="color: var(--accent);">0.00</div></div>
+        <div class="stat-box"><div class="label">未實現盈虧(<span id="inGameLev">1</span>x)</div><div id="unrealized-pnl" class="value">--</div></div>
         <div id="mute-btn" onclick="toggleMute()">🔊</div>
-        <div class="stat-box"><div class="label">總資產 (U)</div><div id="total-equity" class="value" style="color: var(--accent);">0.00</div></div>
-        <div class="stat-box"><div class="label">盈虧 (<span id="inGameLev">1</span>x)</div><div id="unrealized-pnl" style="font-weight: bold;">--</div></div>
     </div>
 
     <div id="chart-container">
-        <div id="msg-box"></div><div id="price-tag"></div><canvas id="mainChart"></canvas>
+        <div id="alert-box">⚠️ 倒數 15 根 K 線！</div>
+        <div id="msg-box"></div>
+        <div id="price-tag"></div>
+        <canvas id="mainChart"></canvas>
     </div>
 
     <div class="controls">
-        <div class="slider-container"><span class="label">投入(%):</span><input type="range" id="buyAmountSlider" min="10" max="100" step="10" value="50" oninput="updateSliderLabel(this.value)"><span id="sliderLabel" class="value">50%</span></div>
-        <div class="btn-group">
-            <button class="btn-buy" onclick="action('buy')">買入</button>
-            <button class="btn-sell" id="sellBtn" onclick="action('sell')" disabled>平倉</button>
+        <div class="slider-container"><span class="label">保證金投入(%):</span><input type="range" id="buyAmountSlider" min="10" max="100" step="10" value="50" oninput="updateSliderLabel(this.value)"><span id="sliderLabel" class="value">50%</span></div>
+        <div class="btn-group" id="main-btn-group">
+            <button class="btn-long" onclick="action('long')">做多</button>
+            <button class="btn-short" id="btn-short-action" onclick="action('short')">做空</button>
+            <button class="btn-closeAll" id="sellBtn" onclick="action('closeAll')" disabled>全平</button>
             <button class="btn-wait" onclick="action('wait')">觀望</button>
         </div>
     </div>
 
-    <div id="overlay" class="fullscreen-overlay" style="display: none; background: rgba(0,0,0,0.95);">
-        <h2 id="rank-title" style="font-size: 32px; margin: 0; text-shadow: 2px 2px #000;"></h2>
-        <div id="rank-subtitle" style="font-size: 14px; margin-bottom: 15px; font-weight: bold;"></div>
-        <div style="background: var(--card-bg); padding: 15px; border-radius: 10px; text-align: left; width: 100%; max-width: 300px; margin-bottom: 20px;">
-            <p style="margin: 4px 0; font-size: 14px;">初始本金: <span id="res-cap" style="float: right; color: white;"></span></p>
-            <p style="margin: 4px 0; font-size: 14px;">使用槓桿: <span id="res-lev" style="float: right; color: white;"></span></p>
-            <hr style="border-color: #333; margin: 8px 0;">
-            <p style="margin: 4px 0; font-size: 14px;">最終資產: <span id="res-eq" style="float: right; font-weight:bold;"></span></p>
-            <p style="margin: 4px 0; font-size: 14px;">投資報酬: <span id="res-roi" style="float: right; font-weight:bold;"></span></p>
-        </div>
-        <button onclick="showStartScreen()" style="background: var(--accent); color: black; width: 220px; padding: 15px;">再玩一次</button>
-    </div>
-
     <div id="start-screen" class="fullscreen-overlay">
-        <h1 style="color: white; margin-bottom: 15px; font-size: 24px;">單車摩托爭奪戰</h1>
+        <h1 style="color: white; margin-bottom: 10px; font-size: 24px;">韭菜生存戰</h1>
+        
+        <div class="intro-box">
+            <p>1. 選擇投入資金比例，預測 K 線漲跌。</p>
+            <p>2. 覺得會漲按<span>「做多」</span>，會跌按<span>「做空」</span>。</p>
+            <p>3. <span>「槓桿」</span>能放大獲利，但也容易爆倉歸零！</p>
+	    <p>4. 按下<span>「觀望」</span>會顯示下一條K線</p>
+        </div>
+
         <div class="setup-group">
-	    <h3>📜 菜鳥必讀</h3>
-            <p><span>買入 (BUY)</span>：看漲！把錢投進去。</p>
-            <p><span>平倉 (SELL)</span>：把手上的幣賣掉，獲利了結或停損。</p>
-            <p><span>觀望 (PASS)</span>：什麼都不做，進到下一根K線。</p>
-            <p><span>投入比例(%)</span>：每次買入要用掉多少比例的可用資金。</p>
-            <p><span>槓桿(1-10x)</span>：借錢放大你的獲利，但虧損也會放大，歸零就破產！</p>
-            <span class="setup-label">1. 選擇幣種 (影響波動)</span>
-            <div class="cap-btn-group">
-                <button class="cap-btn active" id="coin-btc" onclick="selectCoin('BTC')">BTC (穩健)</button>
-                <button class="cap-btn" id="coin-doge" onclick="selectCoin('DOGE')">DOGE (劇烈)</button>
+            <span class="setup-label">你的名字 (榜單用)</span>
+            <div style="display: flex; gap: 8px; margin-bottom: 15px;">
+                <input type="text" id="playerName" style="flex-grow: 1; background:#333; border:1px solid #555; color:white; padding:8px; border-radius:6px; font-family:inherit;">
+                <button onclick="rollName()" style="background: var(--accent); color: black; border: none; border-radius: 6px; width: 40px; font-size: 18px; cursor: pointer;">🎲</button>
             </div>
-            <span class="setup-label">2. 初始資金 (USDT)</span>
+
+            <span class="setup-label">選擇交易對 (影響波動)</span>
+            <div class="cap-btn-group">
+                <button class="cap-btn active" id="coin-btc" onclick="selectCoin('BTC')">BTC (大餅-穩健)</button>
+                <button class="cap-btn" id="coin-doge" onclick="selectCoin('DOGE')">DOGE (瘋狗-暴走)</button>
+            </div>
+
+            <span class="setup-label">初始資金 (USDT)</span>
             <div class="cap-btn-group">
                 <button class="cap-btn" onclick="selectCapital(100)">100</button>
                 <button class="cap-btn active" id="cap-1000" onclick="selectCapital(1000)">1000</button>
             </div>
-            <span class="setup-label">3. 槓桿倍數 (<span id="levDisplay">1</span>x)</span>
-            <input type="range" id="leverageSlider" min="1" max="10" step="1" value="1" oninput="updateLev(this.value)" style="width: 100%;">
+            
+            <div class="toggle-container">
+                <span class="toggle-label">允許做空 (多空雙開)</span>
+                <label class="switch">
+                    <input type="checkbox" id="allowShortToggle" checked onchange="toggleShortMode(this.checked)">
+                    <span class="slider"></span>
+                </label>
+            </div>
+
+            <span class="setup-label">槓桿倍數 (<span id="levDisplay">10</span>x)</span>
+            <input type="range" id="leverageSlider" min="1" max="100" step="1" value="10" oninput="updateLev(this.value)" style="width: 100%;">
+            <div style="font-size:10px; color:#aaa; text-align:right;">(最高支援 100x 信仰)</div>
         </div>
-        <button onclick="startGame()" style="background: var(--up-color); color: white; width: 100%; max-width: 350px; padding: 15px;">開始遊戲</button>
+        
+        <div style="display: flex; gap: 10px; width: 100%; max-width: 350px;">
+            <button onclick="easyStart()" style="background: #34c759; color: white; flex: 1; padding: 12px; border-radius: 8px; font-size: 14px;">簡易上手<br><span style="font-size:10px; font-weight:normal;">(只做多, 3x)</span></button>
+            <button onclick="startGame()" style="background: var(--up-color); color: white; flex: 1.5; padding: 12px; border-radius: 8px; font-size: 18px;">開始交易</button>
+        </div>
+    </div>
+
+    <div id="overlay" class="fullscreen-overlay" style="display: none; background: rgba(0,0,0,0.95);">
+        <h2 id="rank-title" style="font-size: 32px; margin: 0;"></h2>
+        <div id="rank-subtitle" style="font-size: 13px; margin-bottom: 15px; font-weight: bold; line-height: 1.4;"></div>
+        
+        <div style="background: var(--card-bg); padding: 15px; border-radius: 10px; text-align: left; width: 100%; max-width: 300px; margin-bottom: 15px;">
+            <p style="margin: 4px 0; font-size: 14px;">你的報酬率: <span id="res-roi" style="float: right;"></span></p>
+            <p style="margin: 4px 0; font-size: 14px;">無腦放著賺: <span id="res-mkt" style="float: right;"></span></p>
+            <hr style="border-color: #333; margin: 8px 0;">
+            <p style="margin: 4px 0; font-size: 14px; color:var(--accent);">憑實力賺的差價: <span id="res-alpha" style="float: right;"></span></p>
+        </div>
+
+        <div style="display: flex; gap: 10px; width: 100%; max-width: 300px; margin-bottom: 10px;">
+            <button id="save-lb-btn" onclick="saveToLeaderboard()" style="background: #ff9500; color: white; flex: 1; padding: 10px; border-radius: 8px; font-size: 14px; font-weight: bold;">💾 記在排行榜</button>
+            <button onclick="openLeaderboard()" style="background: #333; border: 1px solid var(--accent); color: white; flex: 1; padding: 10px; border-radius: 8px; font-size: 14px;">🏆 英雄榜</button>
+        </div>
+
+        <button onclick="location.reload()" style="background: var(--accent); color: black; width: 100%; max-width: 300px; padding: 12px; border-radius: 8px; font-size: 16px; font-weight: bold;">再戰一場</button>
+        
+        <div id="devil-text" class="devil-whisper"></div>
+    </div>
+
+    <div id="lb-modal">
+        <h2 style="color: var(--accent); margin-bottom: 20px;">🏆 真人合約英雄榜</h2>
+        <div class="lb-card">
+            <div class="lb-row lb-header"><span>名次</span><span>玩家 (幣種)</span><span style="text-align: right;">報酬率</span></div>
+            <div id="lb-content"></div>
+        </div>
+        <button onclick="closeLeaderboard()" style="background: #444; color: white; margin-top: 25px; padding: 10px 30px; border-radius: 8px; border: none; font-size: 16px;">關閉</button>
     </div>
 
 <script>
@@ -166,175 +183,321 @@
     const bgmAudio = new Audio('./bgm.mp3'); 
     bgmAudio.loop = true; bgmAudio.volume = 0.5;
 
-    let isMuted = false, lastJumpTime = 0;
-    let initCapital = 1000, leverage = 1, balance = 1000, totalMargin = 0, btcPosition = 0, avgCost = 0, marketData = [], currentStep = 10, selectedCoin = 'BTC';
+    let isMuted = false, lastJumpTime = 0, lastEquity = 1000;
+    let initCapital = 1000, leverage = 10, balance = 1000, marketData = [], currentStep = 10;
+    let longPos = 0, longMargin = 0, longCost = 0;
+    let shortPos = 0, shortMargin = 0, shortCost = 0;
+    let coinName = "BTC", playerName = "";
+    let allowShort = true;
+    let currentUserRoi = 0; // 用來暫存當局的報酬率給排行榜用
+    
+    const TOTAL_STEPS = 60; 
+    const ALERT_STEP = 55; 
 
-    function toggleMute() {
-        isMuted = !isMuted; bgmAudio.muted = isMuted;
-        document.getElementById('mute-btn').innerText = isMuted ? "🔇" : "🔊";
-        if (!isMuted && audioCtx.state === 'suspended') audioCtx.resume();
-    }
+    const funnyNames = [
+        "百倍槓桿猴", "天台吹風客", "插針受害者", "做空大師", "爆倉藝術家", 
+        "合約戰神", "保證金不足", "拔網線死忠粉", "吃融資費率度日", "扛單死不平", 
+        "多空雙殺", "止損是懦夫", "一秒上下幾十萬", "借錢抄底", "網格被套", 
+        "高點接盤俠", "低谷割肉人", "全倉逐倉分不清", "資金費率小偷", "爆倉信件收集者", 
+        "被強平的男人", "合約勝率0%", "永遠做反向", "看線圖發電", "K線圖畢卡索", 
+        "信仰充值失敗", "抄底抄到地下室", "做多做空都被割", "只賺個便當錢", "一單虧掉一棟樓"
+    ];
 
-    function selectCoin(type) {
-        selectedCoin = type;
-        document.getElementById('coin-btc').classList.toggle('active', type === 'BTC');
-        document.getElementById('coin-doge').classList.toggle('active', type === 'DOGE');
-    }
+    const devilQuotes = [
+        "膽子大一點，100 倍槓桿別猶豫！贏了會所嫩模，輸了下海幹活。",
+        "才賺這點？高槓桿才是暴富的唯一真理，下次拉滿吧！",
+        "真正的勇士，都是帶著 50 倍槓桿睡覺的。",
+        "怕爆倉就不要玩合約，下次把槓桿拉到最右邊試試？",
+	"別人恐懼我貪婪，別人小虧我破產",
+        "人生沒有重來，但槓桿可以重開。100倍，懂？"
+    ];
 
-    function selectCapital(val) {
-        initCapital = val;
-        document.querySelectorAll('.cap-btn').forEach(b => {
-            if(!isNaN(parseInt(b.innerText))) b.classList.toggle('active', parseInt(b.innerText) === val);
-        });
-    }
+    function rollName() { document.getElementById('playerName').value = funnyNames[Math.floor(Math.random() * funnyNames.length)]; }
 
+    let realLeaderboard = JSON.parse(localStorage.getItem('realCryptoLb')) || [];
+
+    function toggleMute() { isMuted = !isMuted; bgmAudio.muted = isMuted; document.getElementById('mute-btn').innerText = isMuted ? "🔇" : "🔊"; }
+    function selectCapital(val) { initCapital = val; lastEquity = val; document.querySelectorAll('.cap-btn').forEach(b => { if(!isNaN(parseInt(b.innerText))) b.classList.toggle('active', parseInt(b.innerText) === val); }); }
+    function selectCoin(val) { coinName = val; document.getElementById('coin-btc').classList.toggle('active', val==='BTC'); document.getElementById('coin-doge').classList.toggle('active', val==='DOGE'); }
     function updateLev(val) { leverage = parseInt(val); document.getElementById('levDisplay').innerText = leverage; }
+    function updateSliderLabel(val) { document.getElementById('sliderLabel').innerText = val + "%"; }
+    
+    function toggleShortMode(isChecked) {
+        allowShort = isChecked;
+        const btnGroup = document.getElementById('main-btn-group');
+        const shortBtn = document.getElementById('btn-short-action');
+        const dashShort = document.getElementById('dash-short');
+        
+        if(isChecked) {
+            btnGroup.classList.remove('no-short');
+            shortBtn.style.display = 'block';
+            dashShort.style.display = 'flex';
+        } else {
+            btnGroup.classList.add('no-short');
+            shortBtn.style.display = 'none';
+            dashShort.style.display = 'none';
+        }
+    }
+
+    function easyStart() {
+        document.getElementById('allowShortToggle').checked = false;
+        toggleShortMode(false);
+        document.getElementById('leverageSlider').value = 3;
+        updateLev(3);
+        startGame();
+    }
 
     function playSound(type) {
-        if (isMuted) return;
-        if (audioCtx.state === 'suspended') audioCtx.resume();
-        const osc = audioCtx.createOscillator(); const g = audioCtx.createGain();
+        if (isMuted) return; if (audioCtx.state === 'suspended') audioCtx.resume();
+        const osc = audioCtx.createOscillator(), g = audioCtx.createGain();
         osc.connect(g); g.connect(audioCtx.destination);
         const now = audioCtx.currentTime;
-        if (type === 'buy') {
-            osc.type = 'square'; osc.frequency.setValueAtTime(987.77, now); osc.frequency.setValueAtTime(1318.51, now + 0.08);
-            g.gain.setValueAtTime(0.1, now); g.gain.setValueAtTime(0, now + 0.16); osc.start(); osc.stop(now + 0.16);
-        } else if (type === 'sell') {
-            osc.type = 'square'; osc.frequency.setValueAtTime(880, now); osc.frequency.exponentialRampToValueAtTime(110, now + 0.2);
-            g.gain.setValueAtTime(0.1, now); g.gain.linearRampToValueAtTime(0, now + 0.2); osc.start(); osc.stop(now + 0.2);
-        } else if (type === 'liq') {
-            osc.type = 'sawtooth'; osc.frequency.setValueAtTime(100, now); osc.frequency.linearRampToValueAtTime(50, now + 0.5);
-            g.gain.setValueAtTime(0.15, now); osc.start(); osc.stop(now + 0.5);
-        }
+        if (type === 'long') { osc.type = 'square'; osc.frequency.setValueAtTime(987, now); osc.frequency.setValueAtTime(1318, now + 0.08); g.gain.setValueAtTime(0.1, now); g.gain.setValueAtTime(0, now + 0.16); osc.start(); osc.stop(now + 0.16); }
+        else if (type === 'short' || type === 'close') { osc.type = 'square'; osc.frequency.setValueAtTime(880, now); osc.frequency.exponentialRampToValueAtTime(110, now + 0.2); g.gain.setValueAtTime(0.1, now); g.gain.linearRampToValueAtTime(0, now + 0.2); osc.start(); osc.stop(now + 0.2); }
+        else if (type === 'liq') { osc.type = 'sawtooth'; osc.frequency.setValueAtTime(100, now); g.gain.setValueAtTime(0.15, now); osc.start(); osc.stop(now + 0.5); }
     }
 
-    function showStartScreen() { document.getElementById('overlay').style.display = 'none'; document.getElementById('start-screen').style.display = 'flex'; }
+    function generateFibData() {
+        let data = [];
+        const basePrice = coinName === 'BTC' ? 50000 + Math.random()*20000 : 0.1 + Math.random()*0.3; 
+        const isBull = Math.random() > 0.4; 
+        const dir = isBull ? 1 : -1;
+        const volatility = coinName === 'BTC' ? (0.1 + Math.random()*0.3) : (0.4 + Math.random()*0.8); 
+        
+        const w0 = basePrice;
+        const w1 = w0 + (w0 * volatility * 0.4) * dir; 
+        const w2 = w1 - (w1 - w0) * (Math.random() > 0.5 ? 0.618 : 0.382); 
+        const w3 = w2 + (w1 - w0) * 1.618; 
+        const w4 = w3 - (w3 - w2) * 0.382; 
+        const w5 = w4 + (w3 - w2) * (Math.random() > 0.5 ? 1.0 : 1.272); 
+        
+        const pivots = [w0, w1, w2, w3, w4, w5];
+        const steps = [20, 15, 30, 15, 20]; 
+        
+        let prevClose = w0;
+        for(let w = 0; w < 5; w++) {
+            let start = pivots[w], end = pivots[w+1], waveDiff = end - start, stepCount = steps[w];
+            for(let i = 0; i < stepCount; i++) {
+                let progress = (i+1)/stepCount;
+                let easedProgress = (1 - Math.cos(progress * Math.PI)) / 2; 
+                let target = start + waveDiff * easedProgress;
+                
+                let open = prevClose;
+                let noise = Math.abs(waveDiff) * 0.25 * (Math.random() - 0.5);
+                let close = Math.max(0.00001, target + noise); 
+                let high = Math.max(open, close) + Math.abs(waveDiff) * 0.08 * Math.random();
+                let low = Math.min(open, close) - Math.abs(waveDiff) * 0.08 * Math.random();
+                
+                data.push({open, close, high, low});
+                prevClose = close;
+            }
+        }
+        return data;
+    }
 
     function startGame() {
-        if (!isMuted && bgmAudio.paused) bgmAudio.play().catch(e => {});
-        balance = initCapital; totalMargin = 0; btcPosition = 0; avgCost = 0; currentStep = 10;
-        document.getElementById('coin-label').innerText = selectedCoin + " 餘額";
+        playerName = document.getElementById('playerName').value || "無名韭菜";
+        bgmAudio.playbackRate = 1.0; 
+        if (bgmAudio.paused && !isMuted) bgmAudio.play().catch(e => {});
+        
+        balance = initCapital; currentStep = 10;
+        longPos = 0; longMargin = 0; longCost = 0;
+        shortPos = 0; shortMargin = 0; shortCost = 0;
+
         document.getElementById('inGameLev').innerText = leverage;
-        marketData = [];
-        let price = selectedCoin === 'BTC' ? 60000 : 0.5;
-        let volBase = selectedCoin === 'BTC' ? 0.015 : 0.06;
-        for (let i = 0; i < 120; i++) {
-            let open = price;
-            let spike = Math.random() > 0.88 ? 3.5 : 1; 
-            let change = open * volBase * spike * (Math.random() - 0.48);
-            let close = open + change;
-            marketData.push({ open, close, high: Math.max(open, close) + open*0.002, low: Math.min(open, close) - open*0.002 });
-            price = close;
-        }
+        document.getElementById('alert-box').style.display = 'none';
+        
+        marketData = generateFibData();
         document.getElementById('start-screen').style.display = 'none';
         resizeCanvas(); updateUI(); draw();
     }
 
-    function updateSliderLabel(val) { document.getElementById('sliderLabel').innerText = val + "%"; }
     const canvas = document.getElementById('mainChart'), ctx = canvas.getContext('2d');
     function resizeCanvas() { const rect = canvas.parentElement.getBoundingClientRect(); canvas.width = rect.width; canvas.height = rect.height; }
-    window.addEventListener('resize', () => { resizeCanvas(); if(marketData.length > 0) draw(); });
-
     function draw() {
         const w = canvas.width, h = canvas.height; if(w === 0 || h === 0) return;
-        const displayCount = 30;
-        const visibleData = marketData.slice(Math.max(0, currentStep - displayCount), currentStep);
+        const displayCount = 30; const visibleData = marketData.slice(Math.max(0, currentStep - displayCount), currentStep);
         const minP = Math.min(...visibleData.map(d => d.low)) * 0.995, maxP = Math.max(...visibleData.map(d => d.high)) * 1.005;
         const range = maxP - minP, cW = w / displayCount;
         ctx.clearRect(0,0,w,h);
         visibleData.forEach((d, i) => {
             const x = i * cW + 2, getY = (p) => h - ((p - minP) / range) * h;
             ctx.fillStyle = d.close >= d.open ? '#00c087' : '#ff3b30';
-            const bodyTop = getY(Math.max(d.open, d.close)), bodyBottom = getY(Math.min(d.open, d.close));
-            ctx.fillRect(x, bodyTop, cW - 4, Math.max(1, bodyBottom - bodyTop));
-            ctx.strokeStyle = ctx.fillStyle;
-            ctx.beginPath(); ctx.moveTo(x + cW/2 - 2, getY(d.high)); ctx.lineTo(x + cW/2 - 2, getY(d.low)); ctx.stroke();
+            ctx.fillRect(x, getY(Math.max(d.open, d.close)), cW - 4, Math.max(1, Math.abs(getY(d.open) - getY(d.close))));
+            ctx.strokeStyle = ctx.fillStyle; ctx.beginPath(); ctx.moveTo(x + cW/2 - 2, getY(d.high)); ctx.lineTo(x + cW/2 - 2, getY(d.low)); ctx.stroke();
         });
         const lastPrice = marketData[currentStep-1].close, tag = document.getElementById('price-tag');
-        tag.style.top = (h - ((lastPrice - minP) / range) * h - 10) + 'px';
-        tag.innerText = lastPrice.toFixed(selectedCoin === 'BTC' ? 1 : 4);
+        tag.style.top = (h - ((lastPrice - minP) / range) * h - 10) + 'px'; tag.innerText = lastPrice.toFixed(coinName==='BTC'?1:4);
     }
 
     function action(type) {
         const price = marketData[currentStep-1].close;
-        if (type === 'buy') {
-            const pct = parseInt(document.getElementById('buyAmountSlider').value) / 100;
-            const margin = balance * pct;
+        const pct = parseInt(document.getElementById('buyAmountSlider').value) / 100;
+        const margin = balance * pct;
+
+        if (type === 'long') {
             if (margin >= 0.1) {
-                const posSize = (margin * leverage) / price;
-                avgCost = ((avgCost * btcPosition) + (price * posSize)) / (btcPosition + posSize);
-                btcPosition += posSize; balance -= margin; totalMargin += margin;
-                playSound('buy');
-            } else { showMsg("餘額不足！"); return; }
-        } else if (type === 'sell') {
-            if (btcPosition > 0) {
-                balance += (totalMargin + (price - avgCost) * btcPosition);
-                btcPosition = 0; totalMargin = 0; avgCost = 0;
-                playSound('sell');
-            } else { showMsg("手上沒單！"); return; }
+                const size = (margin * leverage) / price;
+                longCost = ((longCost * longPos) + (price * size)) / (longPos + size);
+                longPos += size; balance -= margin; longMargin += margin; playSound('long');
+            } else { showMsg("餘額不足"); return; }
+        } else if (type === 'short') {
+            if (margin >= 0.1) {
+                const size = (margin * leverage) / price;
+                shortCost = ((shortCost * shortPos) + (price * size)) / (shortPos + size);
+                shortPos += size; balance -= margin; shortMargin += margin; playSound('short');
+            } else { showMsg("餘額不足"); return; }
+        } else if (type === 'closeAll') {
+            if (longPos > 0 || shortPos > 0) {
+                const lPnl = longPos > 0 ? (price - longCost) * longPos : 0;
+                const sPnl = shortPos > 0 ? (shortCost - price) * shortPos : 0;
+                balance += (longMargin + lPnl + shortMargin + sPnl);
+                longPos = 0; longMargin = 0; longCost = 0;
+                shortPos = 0; shortMargin = 0; shortCost = 0;
+                playSound('close');
+            } else { showMsg("手上沒單"); return; }
         }
-        currentStep++; checkStatus();
+        
+        if(type !== 'closeAll' || (longPos===0 && shortPos===0)) currentStep++; 
+        checkStatus();
     }
 
     function checkStatus() {
-        const lastCandle = marketData[currentStep-1];
-        const changePct = ((lastCandle.close - lastCandle.open) / lastCandle.open) * 100;
+        const price = marketData[currentStep-1].close;
+        const lPnl = longPos > 0 ? (price - longCost) * longPos : 0;
+        const sPnl = shortPos > 0 ? (shortCost - price) * shortPos : 0;
+        const equity = balance + longMargin + lPnl + shortMargin + sPnl;
         const now = Date.now();
 
-        // 戲劇性跳轉：只有在「有持倉」時才判斷 K 線漲跌幅
-        if (btcPosition > 0 && (now - lastJumpTime > 3500)) { 
-            const triggerThreshold = selectedCoin === 'BTC' ? 1.5 : 5.0; // DOGE 門檻要高一點才刺激
-            if (changePct > triggerThreshold) {
-                bgmAudio.currentTime = 29.9; showMsg("🚀 沖天炮！"); lastJumpTime = now;
-            } else if (changePct < -triggerThreshold) {
-                bgmAudio.currentTime = 38.8; showMsg("💀 大跳水！"); lastJumpTime = now;
-            }
+        if (currentStep === ALERT_STEP) {
+            document.getElementById('alert-box').style.display = 'block';
+            bgmAudio.playbackRate = 1.35; 
         }
 
-        const price = lastCandle.close, pnl = (price - avgCost) * btcPosition, equity = balance + totalMargin + pnl;
-        if (equity <= 0) {
-            balance = 0; totalMargin = 0; btcPosition = 0;
-            draw(); updateUI(); playSound('liq'); endGame(true); return;
+        const equityChange = (equity - lastEquity) / initCapital;
+        if (now - lastJumpTime > 4000) {
+            if (equityChange > 0.15) { bgmAudio.currentTime = 29.5; showMsg("🚀 爽翻天！"); lastJumpTime = now; } 
+            else if (equityChange < -0.15) { bgmAudio.currentTime = 38.75; showMsg("💀 要被抬走了！"); lastJumpTime = now; }
         }
-        if (currentStep >= 70) {
-            if (btcPosition > 0) balance += (totalMargin + pnl);
-            endGame(false);
-        } else { draw(); updateUI(); }
+        lastEquity = equity;
+
+        if (equity <= 0) { 
+            draw(); updateUI(); playSound('liq'); 
+            endGame(true, equity); 
+            return; 
+        }
+        if (currentStep >= TOTAL_STEPS + 10) { 
+            if (longPos > 0 || shortPos > 0) balance = equity; 
+            endGame(false, balance); 
+        }
+        else { draw(); updateUI(); }
     }
 
     function updateUI() {
-        const price = marketData[currentStep-1].close, pnl = btcPosition > 0 ? (price - avgCost) * btcPosition : 0, equity = balance + totalMargin + pnl;
+        const price = marketData[currentStep-1].close;
+        const lPnl = longPos > 0 ? (price - longCost) * longPos : 0;
+        const sPnl = shortPos > 0 ? (shortCost - price) * shortPos : 0;
+        const totalPnl = lPnl + sPnl;
+        const equity = balance + longMargin + lPnl + shortMargin + sPnl;
+        
         document.getElementById('balance').innerText = balance.toFixed(2);
-        document.getElementById('position').innerText = btcPosition.toFixed(4);
+        document.getElementById('long-pos').innerText = longPos.toFixed(coinName==='BTC'?4:0);
+        document.getElementById('short-pos').innerText = shortPos.toFixed(coinName==='BTC'?4:0);
         document.getElementById('total-equity').innerText = equity.toFixed(2);
-        const pnlEl = document.getElementById('unrealized-pnl');
-        pnlEl.innerText = (pnl >= 0 ? '+' : '') + pnl.toFixed(2);
-        pnlEl.style.color = pnl >= 0 ? 'var(--up-color)' : 'var(--down-color)';
-        document.getElementById('sellBtn').disabled = (btcPosition <= 0);
+        
+        const pEl = document.getElementById('unrealized-pnl'); 
+        pEl.innerText = (totalPnl >= 0 ? '+' : '') + totalPnl.toFixed(2); 
+        pEl.style.color = totalPnl >= 0 ? 'var(--up-color)' : 'var(--down-color)';
+        
+        document.getElementById('sellBtn').disabled = (longPos <= 0 && shortPos <= 0);
     }
 
-    function showMsg(t) {
-        const b = document.getElementById('msg-box'); b.innerText = t; b.style.display = 'block';
-        setTimeout(() => b.style.display = 'none', 1200);
-    }
+    function showMsg(t) { const b = document.getElementById('msg-box'); b.innerText = t; b.style.display = 'block'; setTimeout(() => b.style.display = 'none', 1200); }
 
-    function endGame(isLiq) {
+    function endGame(isLiq, finalEquity) {
         document.getElementById('overlay').style.display = 'flex';
-        const finalEquity = isLiq ? 0 : balance, roi = ((finalEquity - initCapital) / initCapital) * 100;
+        document.getElementById('alert-box').style.display = 'none';
+        
+        currentUserRoi = ((finalEquity - initCapital) / initCapital) * 100;
+        
+        const startPrice = marketData[9].open; 
+        const finalPrice = marketData[currentStep-1].close;
+        const marketRoi = ((finalPrice - startPrice) / startPrice) * 100 * leverage; 
+        const alpha = currentUserRoi - marketRoi;
+
         let rank = "", sub = "", color = "";
-        if (isLiq || roi <= -90) { rank = "RANK: F"; sub = "☠️ 爆倉歸零 / 睡公園"; color = "var(--down-color)"; }
-        else if (roi < 0) { rank = "RANK: C"; sub = "🧼 虧損出場 / 回去洗碗"; color = "#ff9500"; }
-        else if (roi >= 0 && roi < 50) { rank = "RANK: B"; sub = "🍀 運氣不錯的新手"; color = "#34c759"; }
-        else if (roi >= 50 && roi < 200) { rank = "RANK: A"; sub = "🔥 專業操盤手"; color = "var(--up-color)"; }
-        else { rank = "RANK: SSS"; sub = "👑 幣圈神級人物"; color = "var(--accent)"; }
-        document.getElementById('rank-title').innerText = rank; document.getElementById('rank-title').style.color = color;
-        document.getElementById('rank-subtitle').innerText = sub; document.getElementById('rank-subtitle').style.color = color;
-        document.getElementById('res-cap').innerText = initCapital + " U";
-        document.getElementById('res-lev').innerText = leverage + "x";
-        document.getElementById('res-eq').innerText = finalEquity.toFixed(2) + " U";
-        document.getElementById('res-roi').innerText = (roi >= 0 ? "+" : "") + roi.toFixed(2) + "%";
+        if (isLiq || currentUserRoi <= -90) { 
+            rank = "RANK: F"; sub = `☠️ 穿倉！倒欠莊家 ${Math.abs(finalEquity).toFixed(2)} U`; color = "var(--down-color)"; 
+        } else if (currentUserRoi < 0) { 
+            if (alpha > 20) { rank = "RANK: C+"; sub = "📉 雖然虧了，但你做空跑贏了大盤！"; color = "#ff9500"; }
+            else { rank = "RANK: D"; sub = "🧼 牢底坐穿，韭菜就是你"; color = "var(--down-color)"; }
+        } else {
+            if (alpha < -20) { rank = "RANK: B-"; sub = "🐢 賺錢但瞎忙一場，不如DCA"; color = "#34c759"; }
+            else if (alpha > 50) { rank = "RANK: SSS"; sub = "🔥 對沖大師！完美的波段收割！"; color = "var(--accent)"; }
+            else { rank = "RANK: A"; sub = "📈 穩健操盤手，賭性不夠強烈"; color = "var(--up-color)"; }
+        }
+
+        document.getElementById('rank-title').innerText = rank;
+        document.getElementById('rank-title').style.color = color;
+        document.getElementById('rank-subtitle').innerText = sub;
+        document.getElementById('rank-subtitle').style.color = color;
+        
+        document.getElementById('res-roi').innerText = (currentUserRoi > 0 ? "+" : "") + currentUserRoi.toFixed(2) + "%";
+        document.getElementById('res-roi').style.color = currentUserRoi >= 0 ? "var(--up-color)" : "var(--down-color)";
+        document.getElementById('res-mkt').innerText = (marketRoi > 0 ? "+" : "") + marketRoi.toFixed(2) + "%";
+        document.getElementById('res-alpha').innerText = (alpha > 0 ? "+" : "") + alpha.toFixed(2) + "%";
+        document.getElementById('res-alpha').style.color = alpha >= 0 ? "var(--up-color)" : "var(--down-color)";
+
+        const devilQuote = devilQuotes[Math.floor(Math.random() * devilQuotes.length)];
+        document.getElementById('devil-text').innerText = `"${devilQuote}"`;
+
+        // 恢復儲存按鈕狀態
+        const saveBtn = document.getElementById('save-lb-btn');
+        saveBtn.innerText = "💾 記錄神操作";
+        saveBtn.disabled = false;
+        saveBtn.style.opacity = "1";
     }
-    window.onload = () => { setTimeout(resizeCanvas, 100); };
+
+    // 手動加入排行榜邏輯
+    function saveToLeaderboard() {
+        realLeaderboard.push({ name: playerName, coin: coinName, roi: currentUserRoi });
+        realLeaderboard.sort((a, b) => b.roi - a.roi); 
+        realLeaderboard = realLeaderboard.slice(0, 10); // 確保永遠只存前 10 名，不會卡頓
+        localStorage.setItem('realCryptoLb', JSON.stringify(realLeaderboard));
+
+        const saveBtn = document.getElementById('save-lb-btn');
+        saveBtn.innerText = "✅ 已加入榜單";
+        saveBtn.disabled = true;
+        saveBtn.style.opacity = "0.5";
+
+        openLeaderboard();
+    }
+
+    function openLeaderboard() {
+        const content = document.getElementById('lb-content');
+        content.innerHTML = "";
+        
+        if (realLeaderboard.length === 0) {
+            content.innerHTML = "<div style='text-align:center; padding: 20px; color: var(--text-dim);'>目前還沒有人上榜喔！</div>";
+        } else {
+            realLeaderboard.forEach((player, index) => {
+                const row = document.createElement('div');
+                row.className = 'lb-row';
+                if (player.name === playerName && player.coin === coinName && player.roi === currentUserRoi) {
+                    row.style.color = 'var(--accent)';
+                    row.style.fontWeight = 'bold';
+                }
+                let medal = index === 0 ? "🥇" : (index === 1 ? "🥈" : (index === 2 ? "🥉" : `#${index+1}`));
+                row.innerHTML = `<span>${medal}</span><span style="overflow: hidden; text-overflow: ellipsis; white-space: nowrap;">${player.name} <span style="font-size:10px; color:#888;">(${player.coin})</span></span><span style="color:${player.roi >= 0 ? 'var(--up-color)' : 'var(--down-color)'}">${(player.roi > 0 ? "+" : "") + player.roi.toFixed(1)}%</span>`;
+                content.appendChild(row);
+            });
+        }
+        document.getElementById('lb-modal').style.display = 'flex';
+    }
+
+    function closeLeaderboard() { document.getElementById('lb-modal').style.display = 'none'; }
+
+    window.onload = () => { rollName(); setTimeout(resizeCanvas, 100); };
 </script>
 </body>
 </html>
