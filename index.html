@@ -36,6 +36,7 @@
             grid-template-columns: 1fr 1fr;
             gap: 10px;
             border-bottom: 1px solid #333;
+            z-index: 10;
         }
 
         .stat-box { display: flex; flex-direction: column; }
@@ -48,7 +49,7 @@
             position: relative;
             background: var(--bg-color);
         }
-        canvas { width: 100%; height: 100%; }
+        canvas { width: 100%; height: 100%; display: block; }
 
         #price-tag {
             position: absolute;
@@ -60,16 +61,19 @@
             pointer-events: none;
         }
 
-        /* 底部控制區 */
+        /* 底部控制區 - 針對 Safari 網址列優化 */
         .controls {
-            padding: 15px 20px 30px 20px;
+            padding: 15px 20px;
             background: var(--card-bg);
-            padding-bottom: env(safe-area-inset-bottom, 30px);
+            /* 核心修正：增加底部間距，並加上 iOS 安全區域變數 */
+            padding-bottom: calc(40px + env(safe-area-inset-bottom)); 
+            border-top: 1px solid #333;
+            z-index: 10;
         }
 
         /* 滑桿樣式 */
         .slider-container {
-            margin-bottom: 15px;
+            margin-bottom: 20px;
             display: flex;
             align-items: center;
             justify-content: space-between;
@@ -84,6 +88,7 @@
             display: grid;
             grid-template-columns: 1.2fr 1.2fr 1fr;
             gap: 12px;
+            min-height: 70px;
         }
 
         button {
@@ -93,10 +98,11 @@
             font-size: 18px;
             font-weight: bold;
             color: white;
+            cursor: pointer;
         }
         
         button:active { transform: scale(0.95); opacity: 0.8; }
-        button:disabled { opacity: 0.2; filter: grayscale(1); }
+        button:disabled { opacity: 0.2; filter: grayscale(1); cursor: not-allowed; }
 
         .btn-buy { background-color: var(--up-color); }
         .btn-sell { background-color: var(--down-color); }
@@ -126,6 +132,7 @@
             display: none;
             z-index: 50;
             font-weight: bold;
+            white-space: nowrap;
         }
     </style>
 </head>
@@ -172,7 +179,7 @@
     <div id="overlay">
         <div id="result-emoji" style="font-size: 80px;">🚀</div>
         <div id="result-text" style="font-size: 28px; font-weight: bold; margin: 20px 0;"></div>
-        <p id="result-detail" style="font-size: 18px; color: var(--text-dim); line-height: 1.6;"></p>
+        <p id="result-detail" style="font-size: 18px; color: var(--text-dim); line-height: 1.6; white-space: pre-wrap;"></p>
         <button onclick="resetGame()" style="background: var(--accent); color: black; width: 220px; padding: 15px; margin-top: 30px;">這把不算，重來！</button>
     </div>
 
@@ -252,6 +259,9 @@
         btcPosition = 0;
         avgCost = 0;
         document.getElementById('overlay').style.display = 'none';
+        
+        // 確保視窗縮放正確重繪
+        resizeCanvas();
         updateUI();
         draw();
     }
@@ -259,9 +269,21 @@
     const canvas = document.getElementById('mainChart');
     const ctx = canvas.getContext('2d');
 
+    function resizeCanvas() {
+        canvas.width = canvas.parentElement.clientWidth;
+        canvas.height = canvas.parentElement.clientHeight;
+    }
+
+    window.addEventListener('resize', () => {
+        resizeCanvas();
+        if(marketData.length > 0) draw();
+    });
+
     function draw() {
-        const w = canvas.width = canvas.parentElement.clientWidth;
-        const h = canvas.height = canvas.parentElement.clientHeight;
+        const w = canvas.width;
+        const h = canvas.height;
+        if(w === 0 || h === 0) return; // 避免未載入完成時報錯
+
         const displayCount = 30;
         const visibleData = marketData.slice(Math.max(0, currentStep - displayCount), currentStep);
         const minP = Math.min(...visibleData.map(d => d.low)) * 0.995;
@@ -274,9 +296,19 @@
             const x = i * cW + 2;
             const getY = (p) => h - ((p - minP) / range) * h;
             ctx.fillStyle = d.close >= d.open ? '#00c087' : '#ff3b30';
-            ctx.fillRect(x, getY(Math.max(d.open, d.close)), cW - 4, Math.max(1, Math.abs(getY(d.open) - getY(d.close))));
+            
+            // 畫實體
+            const bodyTop = getY(Math.max(d.open, d.close));
+            const bodyBottom = getY(Math.min(d.open, d.close));
+            const bodyHeight = Math.max(1, bodyBottom - bodyTop);
+            ctx.fillRect(x, bodyTop, cW - 4, bodyHeight);
+            
+            // 畫上下影線
             ctx.strokeStyle = ctx.fillStyle;
-            ctx.beginPath(); ctx.moveTo(x+cW/2-2, getY(d.high)); ctx.lineTo(x+cW/2-2, getY(d.low)); ctx.stroke();
+            ctx.beginPath(); 
+            ctx.moveTo(x + cW/2 - 2, getY(d.high)); 
+            ctx.lineTo(x + cW/2 - 2, getY(d.low)); 
+            ctx.stroke();
         });
 
         const lastPrice = marketData[currentStep-1].close;
@@ -369,7 +401,11 @@
         detail.innerText = `最終資產：${final.toFixed(2)} USDT\n總盈虧：${profitPct}%\n(最後一根已自動為妳全平)`;
     }
 
-    window.onload = resetGame;
+    // 啟動遊戲
+    window.onload = () => {
+        // 延遲一點點確保 DOM 算好尺寸
+        setTimeout(resetGame, 100); 
+    };
 </script>
 </body>
 </html>
