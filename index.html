@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>Trading Simulator</title>
+    <title>8-Bit Trading Simulator</title>
     <style>
         :root {
             --up-color: #00c087;
@@ -19,6 +19,9 @@
             box-sizing: border-box; 
             -webkit-tap-highlight-color: transparent; 
             outline: none; 
+            touch-action: manipulation;
+            -webkit-user-select: none;
+            user-select: none;
         }
         
         html, body {
@@ -32,7 +35,7 @@
             overflow: hidden;
             background-color: var(--bg-color);
             color: var(--text-main);
-            font-family: -apple-system, sans-serif;
+            font-family: "Courier New", Courier, monospace, -apple-system, sans-serif;
             display: flex;
             flex-direction: column;
         }
@@ -152,19 +155,19 @@
 
     <div class="dashboard">
         <div class="stat-box">
-            <div class="label">可用餘額 (USDT)</div>
+            <div class="label">BALANCE (USDT)</div>
             <div id="balance" class="value">1000.00</div>
         </div>
         <div class="stat-box">
-            <div class="label">持有倉位 (BTC)</div>
+            <div class="label">POSITION (BTC)</div>
             <div id="position" class="value">0.0000</div>
         </div>
         <div class="stat-box">
-            <div class="label">總資產 (USDT)</div>
+            <div class="label">EQUITY (USDT)</div>
             <div id="total-equity" class="value" style="color: var(--accent);">1000.00</div>
         </div>
         <div class="stat-box">
-            <div class="label">未實現盈虧</div>
+            <div class="label">PNL</div>
             <div id="unrealized-pnl" style="font-weight: bold;">--</div>
         </div>
     </div>
@@ -177,55 +180,49 @@
 
     <div class="controls">
         <div class="slider-container">
-            <span class="label">買入金額:</span>
+            <span class="label">SIZE:</span>
             <input type="range" id="buyAmountSlider" min="20" max="500" step="10" value="200" oninput="updateSliderLabel(this.value)">
             <span id="sliderLabel" class="value">200U</span>
         </div>
         <div class="btn-group">
-            <button class="btn-buy" onclick="action('buy')">買入</button>
-            <button class="btn-sell" id="sellBtn" onclick="action('sell')" disabled>平倉</button>
-            <button class="btn-wait" onclick="action('wait')">觀望</button>
+            <button class="btn-buy" onclick="action('buy')">BUY</button>
+            <button class="btn-sell" id="sellBtn" onclick="action('sell')" disabled>SELL</button>
+            <button class="btn-wait" onclick="action('wait')">PASS</button>
         </div>
     </div>
 
     <div id="overlay">
         <div id="result-text" style="font-size: 28px; font-weight: bold; margin: 20px 0;"></div>
         <p id="result-detail" style="font-size: 18px; color: var(--text-dim); line-height: 1.6; white-space: pre-wrap;"></p>
-        <button onclick="resetGame()" style="background: var(--accent); color: black; width: 220px; padding: 15px; margin-top: 30px;">重新開始</button>
+        <button onclick="resetGame()" style="background: var(--accent); color: black; width: 220px; padding: 15px; margin-top: 30px;">RESTART</button>
     </div>
 
 <script>
     const audioCtx = new (window.AudioContext || window.webkitAudioContext)();
-    let bgmOsc = null;
-    let bgmGain = null;
-
-    function initBGM() {
-        if (bgmOsc) return;
-        bgmOsc = audioCtx.createOscillator();
-        bgmGain = audioCtx.createGain();
-        bgmOsc.type = 'sine';
-        bgmOsc.frequency.setValueAtTime(150, audioCtx.currentTime);
-        bgmGain.gain.setValueAtTime(0.08, audioCtx.currentTime);
-        bgmOsc.connect(bgmGain);
-        bgmGain.connect(audioCtx.destination);
-        bgmOsc.start();
-    }
 
     function playSound(type) {
+        if (audioCtx.state === 'suspended') {
+            audioCtx.resume();
+        }
+        
         const osc = audioCtx.createOscillator();
         const g = audioCtx.createGain();
         osc.connect(g); g.connect(audioCtx.destination);
         const now = audioCtx.currentTime;
 
         if (type === 'buy') {
-            osc.frequency.setValueAtTime(800, now);
-            osc.frequency.exponentialRampToValueAtTime(1200, now + 0.1);
+            osc.type = 'square';
+            osc.frequency.setValueAtTime(987.77, now);
+            osc.frequency.setValueAtTime(1318.51, now + 0.08);
             g.gain.setValueAtTime(0.1, now);
-            osc.start(); osc.stop(now + 0.1);
+            g.gain.setValueAtTime(0, now + 0.16);
+            osc.start(); osc.stop(now + 0.16);
         } else if (type === 'sell') {
-            osc.frequency.setValueAtTime(600, now);
-            osc.frequency.exponentialRampToValueAtTime(300, now + 0.2);
+            osc.type = 'square';
+            osc.frequency.setValueAtTime(880, now);
+            osc.frequency.exponentialRampToValueAtTime(110, now + 0.2);
             g.gain.setValueAtTime(0.1, now);
+            g.gain.linearRampToValueAtTime(0, now + 0.2);
             osc.start(); osc.stop(now + 0.2);
         } else if (type === 'error') {
             osc.type = 'sawtooth';
@@ -322,12 +319,7 @@
         tag.innerText = lastPrice.toFixed(1);
     }
 
-    async function action(type) {
-        if (audioCtx.state === 'suspended') {
-            await audioCtx.resume();
-        }
-        initBGM();
-        
+    function action(type) {
         const price = marketData[currentStep-1].close;
         const buyAmount = parseInt(document.getElementById('buyAmountSlider').value);
 
@@ -339,7 +331,7 @@
                 balance -= buyAmount;
                 playSound('buy');
             } else {
-                showMsg("餘額不足"); playSound('error'); return;
+                showMsg("ERROR"); playSound('error'); return;
             }
         } else if (type === 'sell') {
             if (btcPosition > 0) {
@@ -347,7 +339,12 @@
                 btcPosition = 0; avgCost = 0;
                 playSound('sell');
             } else {
-                showMsg("當前無持倉"); playSound('error'); return;
+                showMsg("EMPTY"); playSound('error'); return;
+            }
+        } else if (type === 'wait') {
+            // 解除 iOS 聲音鎖定
+            if (audioCtx.state === 'suspended') {
+                audioCtx.resume();
             }
         }
 
@@ -376,8 +373,6 @@
         pnlEl.innerText = (pnl >= 0 ? '+' : '') + pnl.toFixed(2);
         pnlEl.style.color = pnl >= 0 ? 'var(--up-color)' : 'var(--down-color)';
         document.getElementById('sellBtn').disabled = (btcPosition <= 0);
-        
-        if(bgmOsc) bgmOsc.frequency.setTargetAtTime(150 + (pnl/5), audioCtx.currentTime, 0.5);
     }
 
     function showMsg(t) {
@@ -396,13 +391,13 @@
         const profitPct = (profit / 10).toFixed(2);
 
         if (profit > 0) {
-            txt.innerText = "結算：獲利";
+            txt.innerText = "WINNER";
             txt.style.color = "var(--up-color)";
         } else {
-            txt.innerText = "結算：虧損";
+            txt.innerText = "GAME OVER";
             txt.style.color = "var(--down-color)";
         }
-        detail.innerText = `最終資產：${final.toFixed(2)} USDT\n總盈虧：${profitPct}%\n(已強制平倉)`;
+        detail.innerText = `ASSETS: ${final.toFixed(2)} USDT\nPNL: ${profitPct}%\n(AUTO-CLOSED)`;
     }
 
     window.onload = () => {
