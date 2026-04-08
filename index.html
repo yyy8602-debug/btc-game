@@ -28,10 +28,7 @@
             margin: 0;
             padding: 0;
             position: absolute;
-            top: 0;
-            left: 0;
-            right: 0;
-            bottom: 0;
+            top: 0; left: 0; right: 0; bottom: 0;
             overflow: hidden;
             background-color: var(--bg-color);
             color: var(--text-main);
@@ -42,17 +39,17 @@
 
         .dashboard {
             background: var(--card-bg);
-            padding: 15px;
+            padding: 10px 15px;
             display: grid;
             grid-template-columns: 1fr 1fr;
-            gap: 10px;
+            gap: 8px;
             border-bottom: 1px solid #333;
             flex-shrink: 0;
         }
 
         .stat-box { display: flex; flex-direction: column; }
-        .label { font-size: 11px; color: var(--text-dim); }
-        .value { font-size: 16px; font-weight: bold; font-variant-numeric: tabular-nums; }
+        .label { font-size: 11px; color: var(--text-dim); font-weight: bold;}
+        .value { font-size: 15px; font-weight: bold; font-variant-numeric: tabular-nums; }
 
         #chart-container {
             flex: 1 1 0%;
@@ -62,61 +59,33 @@
         }
 
         canvas { 
-            position: absolute;
-            top: 0;
-            left: 0;
-            width: 100%; 
-            height: 100%; 
-            display: block; 
+            position: absolute; top: 0; left: 0; width: 100%; height: 100%; display: block; 
         }
 
         #price-tag {
-            position: absolute;
-            right: 5px;
+            position: absolute; right: 5px;
             background: rgba(255,255,255,0.1);
-            padding: 2px 5px;
-            font-size: 12px;
-            border-radius: 4px;
-            pointer-events: none;
-            z-index: 2;
+            padding: 2px 5px; font-size: 12px; border-radius: 4px; pointer-events: none; z-index: 2;
         }
 
         .controls {
-            padding: 15px 20px 80px 20px;
+            padding: 15px 20px 60px 20px;
             background: var(--card-bg);
             border-top: 1px solid #333;
             flex-shrink: 0;
         }
 
         .slider-container {
-            margin-bottom: 20px;
-            display: flex;
-            align-items: center;
-            justify-content: space-between;
+            margin-bottom: 15px; display: flex; align-items: center; justify-content: space-between;
         }
-        input[type=range] {
-            flex-grow: 1;
-            margin: 0 15px;
-            accent-color: var(--accent);
-        }
+        input[type=range] { flex-grow: 1; margin: 0 15px; accent-color: var(--accent); }
 
-        .btn-group {
-            display: grid;
-            grid-template-columns: 1.2fr 1.2fr 1fr;
-            gap: 12px;
-            height: 60px;
-        }
+        .btn-group { display: grid; grid-template-columns: 1.2fr 1.2fr 1fr; gap: 12px; height: 60px; }
 
         button {
-            border: none;
-            border-radius: 12px;
-            font-size: 18px;
-            font-weight: bold;
-            color: white;
-            cursor: pointer;
-            height: 100%;
+            border: none; border-radius: 12px; font-size: 18px; font-weight: bold;
+            color: white; cursor: pointer; height: 100%;
         }
-        
         button:active { transform: scale(0.95); opacity: 0.8; }
         button:disabled { opacity: 0.2; filter: grayscale(1); cursor: not-allowed; }
 
@@ -124,50 +93,93 @@
         .btn-sell { background-color: var(--down-color); }
         .btn-wait { background-color: #474d57; }
 
-        #overlay {
-            position: absolute;
-            top: 0; left: 0; width: 100%; height: 100%;
-            background: rgba(0,0,0,0.95);
-            display: none;
-            flex-direction: column;
-            justify-content: center;
-            align-items: center;
-            z-index: 100;
-            text-align: center;
-            padding: 20px;
+        .fullscreen-overlay {
+            position: absolute; top: 0; left: 0; width: 100%; height: 100%;
+            background: var(--bg-color);
+            display: flex; flex-direction: column; justify-content: center; align-items: center;
+            z-index: 100; text-align: center; padding: 20px;
+            overflow-y: auto;
         }
 
+        #start-screen { background: rgba(15, 20, 26, 0.98); }
+        .tutorial-box {
+            background: var(--card-bg); border: 2px solid #333; padding: 15px;
+            border-radius: 10px; text-align: left; margin-bottom: 20px; width: 100%; max-width: 350px;
+        }
+        .tutorial-box h3 { margin: 0 0 10px 0; color: var(--accent); font-size: 18px; text-align: center;}
+        .tutorial-box p { margin: 5px 0; font-size: 13px; line-height: 1.5; color: #ccc;}
+        .tutorial-box span { color: white; font-weight: bold; }
+
+        .setup-group { width: 100%; max-width: 350px; margin-bottom: 20px; text-align: left;}
+        .setup-label { color: var(--accent); font-weight: bold; margin-bottom: 10px; display: block;}
+        .cap-btn-group { display: flex; gap: 10px; margin-bottom: 20px;}
+        .cap-btn { 
+            flex: 1; padding: 10px; background: #333; border: 2px solid transparent; 
+            border-radius: 8px; color: white; font-weight: bold; font-family: inherit;
+        }
+        .cap-btn.active { border-color: var(--accent); background: #444; }
+
         #msg-box {
-            position: absolute;
-            top: 25%; left: 50%;
-            transform: translateX(-50%);
-            background: #ff3b30;
-            padding: 10px 20px;
-            border-radius: 20px;
-            display: none;
-            z-index: 50;
-            font-weight: bold;
-            white-space: nowrap;
+            position: absolute; top: 25%; left: 50%; transform: translateX(-50%);
+            background: #ff3b30; padding: 10px 20px; border-radius: 20px;
+            display: none; z-index: 50; font-weight: bold; white-space: nowrap;
+        }
+
+        /* 靜音按鈕樣式 */
+        #mute-btn {
+            position: absolute; top: 15px; right: 15px;
+            background: var(--bg-color); border: 2px solid #555;
+            color: white; font-family: inherit; font-size: 12px; font-weight: bold;
+            padding: 5px 10px; border-radius: 6px; cursor: pointer; z-index: 1000;
         }
     </style>
 </head>
 <body>
 
+    <button id="mute-btn" onclick="toggleMute()">音效: 開啟</button>
+
+    <div id="start-screen" class="fullscreen-overlay">
+        <h1 style="color: white; margin-bottom: 20px;">8-BIT 交易生存戰</h1>
+        
+        <div class="tutorial-box">
+            <h3>📜 菜鳥必讀</h3>
+            <p><span>買入 (BUY)</span>：看漲！把錢投進去。</p>
+            <p><span>平倉 (SELL)</span>：把手上的幣賣掉，獲利了結或停損。</p>
+            <p><span>觀望 (PASS)</span>：什麼都不做，讓 K 線走一分鐘。</p>
+            <p><span>投入比例(%)</span>：每次買入要用掉多少比例的可用資金。</p>
+            <p><span>槓桿(1-10x)</span>：借錢放大你的獲利，但虧損也會放大，歸零就破產！</p>
+        </div>
+
+        <div class="setup-group">
+            <span class="setup-label">1. 選擇初始資金 (USDT)</span>
+            <div class="cap-btn-group">
+                <button class="cap-btn" onclick="selectCapital(100)">100</button>
+                <button class="cap-btn" onclick="selectCapital(500)">500</button>
+                <button class="cap-btn active" onclick="selectCapital(1000)">1000</button>
+            </div>
+
+            <span class="setup-label">2. 選擇開局槓桿 (<span id="levDisplay">1</span>x)</span>
+            <input type="range" id="leverageSlider" min="1" max="10" step="1" value="1" oninput="updateLev(this.value)" style="width: 100%;">
+        </div>
+
+        <button onclick="startGame()" style="background: var(--up-color); color: white; width: 100%; max-width: 350px; padding: 15px;">開始遊戲</button>
+    </div>
+
     <div class="dashboard">
         <div class="stat-box">
-            <div class="label">BALANCE (USDT)</div>
-            <div id="balance" class="value">1000.00</div>
+            <div class="label">餘額 (USDT)</div>
+            <div id="balance" class="value">0.00</div>
         </div>
         <div class="stat-box">
-            <div class="label">POSITION (BTC)</div>
+            <div class="label">持倉 (BTC)</div>
             <div id="position" class="value">0.0000</div>
         </div>
         <div class="stat-box">
-            <div class="label">EQUITY (USDT)</div>
-            <div id="total-equity" class="value" style="color: var(--accent);">1000.00</div>
+            <div class="label">總資產 (USDT)</div>
+            <div id="total-equity" class="value" style="color: var(--accent);">0.00</div>
         </div>
         <div class="stat-box">
-            <div class="label">PNL</div>
+            <div class="label">未實現盈虧 (<span id="inGameLev">1</span>x)</div>
             <div id="unrealized-pnl" style="font-weight: bold;">--</div>
         </div>
     </div>
@@ -180,31 +192,57 @@
 
     <div class="controls">
         <div class="slider-container">
-            <span class="label">SIZE:</span>
-            <input type="range" id="buyAmountSlider" min="20" max="500" step="10" value="200" oninput="updateSliderLabel(this.value)">
-            <span id="sliderLabel" class="value">200U</span>
+            <span class="label">投入(%):</span>
+            <input type="range" id="buyAmountSlider" min="10" max="100" step="10" value="50" oninput="updateSliderLabel(this.value)">
+            <span id="sliderLabel" class="value">50%</span>
         </div>
         <div class="btn-group">
-            <button class="btn-buy" onclick="action('buy')">BUY</button>
-            <button class="btn-sell" id="sellBtn" onclick="action('sell')" disabled>SELL</button>
-            <button class="btn-wait" onclick="action('wait')">PASS</button>
+            <button class="btn-buy" onclick="action('buy')">買入</button>
+            <button class="btn-sell" id="sellBtn" onclick="action('sell')" disabled>平倉</button>
+            <button class="btn-wait" onclick="action('wait')">觀望</button>
         </div>
     </div>
 
-    <div id="overlay">
-        <div id="result-text" style="font-size: 28px; font-weight: bold; margin: 20px 0;"></div>
-        <p id="result-detail" style="font-size: 18px; color: var(--text-dim); line-height: 1.6; white-space: pre-wrap;"></p>
-        <button onclick="resetGame()" style="background: var(--accent); color: black; width: 220px; padding: 15px; margin-top: 30px;">RESTART</button>
+    <div id="overlay" class="fullscreen-overlay" style="display: none; background: rgba(0,0,0,0.95);">
+        <h2 id="rank-title" style="font-size: 36px; margin: 0; text-shadow: 2px 2px #000;"></h2>
+        <div id="rank-subtitle" style="font-size: 16px; margin-bottom: 20px; font-weight: bold;"></div>
+        
+        <div style="background: var(--card-bg); padding: 20px; border-radius: 10px; text-align: left; width: 100%; max-width: 300px; margin-bottom: 30px;">
+            <p style="margin: 5px 0;">初始本金: <span id="res-cap" style="float: right; color: white;"></span></p>
+            <p style="margin: 5px 0;">使用槓桿: <span id="res-lev" style="float: right; color: white;"></span></p>
+            <hr style="border-color: #333; margin: 10px 0;">
+            <p style="margin: 5px 0;">最終資產: <span id="res-eq" style="float: right; font-weight:bold;"></span></p>
+            <p style="margin: 5px 0;">投資報酬: <span id="res-roi" style="float: right; font-weight:bold;"></span></p>
+        </div>
+
+        <button onclick="showStartScreen()" style="background: var(--accent); color: black; width: 220px; padding: 15px;">再玩一次</button>
     </div>
 
 <script>
     const audioCtx = new (window.AudioContext || window.webkitAudioContext)();
+    
+    // 綁定 GitHub 上的音樂檔案
+    const bgmAudio = new Audio('./bgm.mp3'); 
+    bgmAudio.loop = true;  
+    bgmAudio.volume = 0.4; 
 
-    function playSound(type) {
-        if (audioCtx.state === 'suspended') {
+    let isMuted = false;
+
+    // 靜音切換功能
+    function toggleMute() {
+        isMuted = !isMuted;
+        bgmAudio.muted = isMuted;
+        document.getElementById('mute-btn').innerText = isMuted ? "音效: 關閉" : "音效: 開啟";
+        document.getElementById('mute-btn').style.borderColor = isMuted ? "#ff3b30" : "#555";
+        if (!isMuted && audioCtx.state === 'suspended') {
             audioCtx.resume();
         }
-        
+    }
+
+    // 8-bit 音效合成
+    function playSound(type) {
+        if (isMuted) return;
+        if (audioCtx.state === 'suspended') audioCtx.resume();
         const osc = audioCtx.createOscillator();
         const g = audioCtx.createGain();
         osc.connect(g); g.connect(audioCtx.destination);
@@ -224,49 +262,74 @@
             g.gain.setValueAtTime(0.1, now);
             g.gain.linearRampToValueAtTime(0, now + 0.2);
             osc.start(); osc.stop(now + 0.2);
-        } else if (type === 'error') {
+        } else if (type === 'error' || type === 'liq') {
             osc.type = 'sawtooth';
             osc.frequency.setValueAtTime(100, now);
-            g.gain.setValueAtTime(0.1, now);
-            osc.start(); osc.stop(now + 0.3);
+            osc.frequency.linearRampToValueAtTime(50, now + 0.5);
+            g.gain.setValueAtTime(0.15, now);
+            osc.start(); osc.stop(now + 0.5);
         }
     }
 
-    let marketData = [];
-    let currentStep = 10;
+    let initCapital = 1000;
+    let leverage = 1;
     let balance = 1000;
+    let totalMargin = 0; 
     let btcPosition = 0;
     let avgCost = 0;
+    let marketData = [];
+    let currentStep = 10;
     const TOTAL_STEPS = 60;
 
-    function generateBtcData() {
-        let data = [];
+    function selectCapital(val) {
+        initCapital = val;
+        document.querySelectorAll('.cap-btn').forEach(btn => {
+            btn.classList.remove('active');
+            if(parseInt(btn.innerText) === val) btn.classList.add('active');
+        });
+    }
+
+    function updateLev(val) {
+        leverage = parseInt(val);
+        document.getElementById('levDisplay').innerText = leverage;
+    }
+
+    function showStartScreen() {
+        document.getElementById('overlay').style.display = 'none';
+        document.getElementById('start-screen').style.display = 'flex';
+    }
+
+    function startGame() {
+        if (!isMuted && bgmAudio.paused) {
+            bgmAudio.play().catch(e => console.log("等待使用者互動以播放音樂"));
+        }
+        
+        balance = initCapital;
+        totalMargin = 0;
+        btcPosition = 0;
+        avgCost = 0;
+        currentStep = 10;
+        document.getElementById('inGameLev').innerText = leverage;
+        
+        marketData = [];
         let price = 50000 + Math.random() * 20000;
         for (let i = 0; i < 100; i++) {
             let open = price;
-            let vol = (Math.random() > 0.8) ? 0.04 : 0.01; 
+            let vol = (Math.random() > 0.8) ? 0.05 : 0.015; 
             let change = open * vol * (Math.random() - 0.5);
             let close = open + change;
-            data.push({ open, close, high: Math.max(open, close) + open*0.002, low: Math.min(open, close) - open*0.002 });
+            marketData.push({ open, close, high: Math.max(open, close) + open*0.002, low: Math.min(open, close) - open*0.002 });
             price = close;
         }
-        return data;
-    }
 
-    function updateSliderLabel(val) {
-        document.getElementById('sliderLabel').innerText = val + "U";
-    }
-
-    function resetGame() {
-        marketData = generateBtcData();
-        currentStep = 10;
-        balance = 1000;
-        btcPosition = 0;
-        avgCost = 0;
-        document.getElementById('overlay').style.display = 'none';
+        document.getElementById('start-screen').style.display = 'none';
         resizeCanvas();
         updateUI();
         draw();
+    }
+
+    function updateSliderLabel(val) {
+        document.getElementById('sliderLabel').innerText = val + "%";
     }
 
     const canvas = document.getElementById('mainChart');
@@ -277,15 +340,10 @@
         canvas.width = rect.width;
         canvas.height = rect.height;
     }
-
-    window.addEventListener('resize', () => {
-        resizeCanvas();
-        if(marketData.length > 0) draw();
-    });
+    window.addEventListener('resize', () => { resizeCanvas(); if(marketData.length > 0) draw(); });
 
     function draw() {
-        const w = canvas.width;
-        const h = canvas.height;
+        const w = canvas.width, h = canvas.height;
         if(w === 0 || h === 0) return;
 
         const displayCount = 30;
@@ -303,14 +361,10 @@
             
             const bodyTop = getY(Math.max(d.open, d.close));
             const bodyBottom = getY(Math.min(d.open, d.close));
-            const bodyHeight = Math.max(1, bodyBottom - bodyTop);
-            ctx.fillRect(x, bodyTop, cW - 4, bodyHeight);
+            ctx.fillRect(x, bodyTop, cW - 4, Math.max(1, bodyBottom - bodyTop));
             
             ctx.strokeStyle = ctx.fillStyle;
-            ctx.beginPath(); 
-            ctx.moveTo(x + cW/2 - 2, getY(d.high)); 
-            ctx.lineTo(x + cW/2 - 2, getY(d.low)); 
-            ctx.stroke();
+            ctx.beginPath(); ctx.moveTo(x + cW/2 - 2, getY(d.high)); ctx.lineTo(x + cW/2 - 2, getY(d.low)); ctx.stroke();
         });
 
         const lastPrice = marketData[currentStep-1].close;
@@ -321,40 +375,52 @@
 
     function action(type) {
         const price = marketData[currentStep-1].close;
-        const buyAmount = parseInt(document.getElementById('buyAmountSlider').value);
 
         if (type === 'buy') {
-            if (balance >= buyAmount) {
-                const amt = buyAmount / price;
-                avgCost = ((avgCost * btcPosition) + (price * amt)) / (btcPosition + amt);
-                btcPosition += amt;
-                balance -= buyAmount;
+            const pct = parseInt(document.getElementById('buyAmountSlider').value) / 100;
+            const marginToUse = balance * pct;
+            
+            if (marginToUse >= 1) { 
+                const positionSize = (marginToUse * leverage) / price; 
+                avgCost = ((avgCost * btcPosition) + (price * positionSize)) / (btcPosition + positionSize);
+                btcPosition += positionSize;
+                balance -= marginToUse;
+                totalMargin += marginToUse;
                 playSound('buy');
             } else {
-                showMsg("ERROR"); playSound('error'); return;
+                showMsg("餘額不足！"); playSound('error'); return;
             }
         } else if (type === 'sell') {
             if (btcPosition > 0) {
-                balance += btcPosition * price;
-                btcPosition = 0; avgCost = 0;
+                const pnl = (price - avgCost) * btcPosition;
+                balance += (totalMargin + pnl); 
+                btcPosition = 0; totalMargin = 0; avgCost = 0;
                 playSound('sell');
             } else {
-                showMsg("EMPTY"); playSound('error'); return;
-            }
-        } else if (type === 'wait') {
-            // 解除 iOS 聲音鎖定
-            if (audioCtx.state === 'suspended') {
-                audioCtx.resume();
+                showMsg("手上沒單！"); playSound('error'); return;
             }
         }
 
         currentStep++;
+        checkStatus();
+    }
+
+    function checkStatus() {
+        const price = marketData[currentStep-1].close;
+        const pnl = (price - avgCost) * btcPosition;
+        const equity = balance + totalMargin + pnl;
+
+        if (equity <= 0) {
+            balance = 0; totalMargin = 0; btcPosition = 0;
+            draw(); updateUI();
+            playSound('liq');
+            endGame(true);
+            return;
+        }
+
         if (currentStep >= TOTAL_STEPS + 10) {
-            if (btcPosition > 0) {
-                balance += btcPosition * marketData[currentStep-1].close;
-                btcPosition = 0;
-            }
-            endGame();
+            if (btcPosition > 0) balance += (totalMargin + pnl);
+            endGame(false);
         } else {
             draw(); updateUI();
         }
@@ -362,12 +428,12 @@
 
     function updateUI() {
         const price = marketData[currentStep-1].close;
-        const total = balance + (btcPosition * price);
         const pnl = btcPosition > 0 ? (price - avgCost) * btcPosition : 0;
+        const equity = balance + totalMargin + pnl;
         
         document.getElementById('balance').innerText = balance.toFixed(2);
         document.getElementById('position').innerText = btcPosition.toFixed(4);
-        document.getElementById('total-equity').innerText = total.toFixed(2);
+        document.getElementById('total-equity').innerText = equity.toFixed(2);
         
         const pnlEl = document.getElementById('unrealized-pnl');
         pnlEl.innerText = (pnl >= 0 ? '+' : '') + pnl.toFixed(2);
@@ -381,28 +447,41 @@
         setTimeout(() => b.style.display = 'none', 1000);
     }
 
-    function endGame() {
+    function endGame(isLiq) {
         document.getElementById('overlay').style.display = 'flex';
-        const final = balance;
-        const txt = document.getElementById('result-text');
-        const detail = document.getElementById('result-detail');
         
-        const profit = final - 1000;
-        const profitPct = (profit / 10).toFixed(2);
+        const finalEquity = isLiq ? 0 : balance;
+        const roi = ((finalEquity - initCapital) / initCapital) * 100;
+        
+        let rank = ""; let sub = ""; let color = "";
 
-        if (profit > 0) {
-            txt.innerText = "WINNER";
-            txt.style.color = "var(--up-color)";
+        if (isLiq || roi <= -90) {
+            rank = "RANK: F"; sub = "☠️ 爆倉歸零 / 睡公園"; color = "var(--down-color)";
+        } else if (roi < 0) {
+            rank = "RANK: C"; sub = "🧼 虧損出場 / 回去洗碗"; color = "#ff9500";
+        } else if (roi >= 0 && roi < 50) {
+            rank = "RANK: B"; sub = "🍀 運氣不錯的新手"; color = "#34c759";
+        } else if (roi >= 50 && roi < 200) {
+            rank = "RANK: A"; sub = "🔥 專業操盤手"; color = "var(--up-color)";
         } else {
-            txt.innerText = "GAME OVER";
-            txt.style.color = "var(--down-color)";
+            rank = "RANK: SSS"; sub = "👑 幣圈神級人物"; color = "var(--accent)";
+            if(leverage >= 5) sub = "👑 賭神再世 (高槓桿暴富)";
         }
-        detail.innerText = `ASSETS: ${final.toFixed(2)} USDT\nPNL: ${profitPct}%\n(AUTO-CLOSED)`;
-    }
 
-    window.onload = () => {
-        setTimeout(resetGame, 100); 
-    };
+        document.getElementById('rank-title').innerText = rank;
+        document.getElementById('rank-title').style.color = color;
+        document.getElementById('rank-subtitle').innerText = sub;
+        document.getElementById('rank-subtitle').style.color = color;
+
+        document.getElementById('res-cap').innerText = initCapital + " U";
+        document.getElementById('res-lev').innerText = leverage + "x";
+        
+        document.getElementById('res-eq').innerText = finalEquity.toFixed(2) + " U";
+        document.getElementById('res-eq').style.color = finalEquity > initCapital ? "var(--up-color)" : (finalEquity === 0 ? "var(--down-color)" : "white");
+        
+        document.getElementById('res-roi').innerText = (roi >= 0 ? "+" : "") + roi.toFixed(2) + "%";
+        document.getElementById('res-roi').style.color = finalEquity > initCapital ? "var(--up-color)" : "var(--down-color)";
+    }
 </script>
 </body>
 </html>
