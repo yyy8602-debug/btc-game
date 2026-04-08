@@ -37,19 +37,36 @@
             flex-direction: column;
         }
 
+        /* 頂部看板佈局修正 */
         .dashboard {
             background: var(--card-bg);
             padding: 10px 15px;
             display: grid;
-            grid-template-columns: 1fr 1fr;
+            grid-template-columns: 1fr 1fr 45px; /* 為音效按鈕預留固定寬度 */
             gap: 8px;
             border-bottom: 1px solid #333;
             flex-shrink: 0;
+            align-items: center;
         }
 
         .stat-box { display: flex; flex-direction: column; }
-        .label { font-size: 11px; color: var(--text-dim); font-weight: bold;}
-        .value { font-size: 15px; font-weight: bold; font-variant-numeric: tabular-nums; }
+        .label { font-size: 10px; color: var(--text-dim); font-weight: bold;}
+        .value { font-size: 14px; font-weight: bold; font-variant-numeric: tabular-nums; }
+
+        /* 靜音按鈕：微型化並嵌入頂部 */
+        #mute-btn {
+            background: #333;
+            border: 1px solid #555;
+            color: white;
+            font-size: 16px;
+            width: 40px;
+            height: 40px;
+            border-radius: 8px;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            cursor: pointer;
+        }
 
         #chart-container {
             flex: 1 1 0%;
@@ -112,10 +129,10 @@
 
         .setup-group { width: 100%; max-width: 350px; margin-bottom: 20px; text-align: left;}
         .setup-label { color: var(--accent); font-weight: bold; margin-bottom: 10px; display: block;}
-        .cap-btn-group { display: flex; gap: 10px; margin-bottom: 20px;}
+        .cap-btn-group { display: flex; gap: 8px; margin-bottom: 20px;}
         .cap-btn { 
             flex: 1; padding: 10px; background: #333; border: 2px solid transparent; 
-            border-radius: 8px; color: white; font-weight: bold; font-family: inherit;
+            border-radius: 8px; color: white; font-weight: bold; font-family: inherit; font-size: 12px;
         }
         .cap-btn.active { border-color: var(--accent); background: #444; }
 
@@ -124,63 +141,27 @@
             background: #ff3b30; padding: 10px 20px; border-radius: 20px;
             display: none; z-index: 50; font-weight: bold; white-space: nowrap;
         }
-
-        /* 靜音按鈕樣式 (優化版：微縮、半透明) */
-        #mute-btn {
-            position: absolute; top: 12px; right: 12px;
-            background: rgba(30, 35, 41, 0.8); border: 1px solid #444;
-            color: var(--text-dim); font-family: inherit; font-size: 11px; font-weight: bold;
-            padding: 4px 8px; border-radius: 4px; cursor: pointer; z-index: 1000;
-            backdrop-filter: blur(2px);
-        }
     </style>
 </head>
 <body>
 
-    <button id="mute-btn" onclick="toggleMute()">🔊 音效</button>
-
-    <div id="start-screen" class="fullscreen-overlay">
-        <h1 style="color: white; margin-bottom: 20px;">8-BIT 交易生存戰</h1>
-        
-        <div class="tutorial-box">
-            <h3>📜 菜鳥必讀</h3>
-            <p><span>買入 (BUY)</span>：看漲！把錢投進去。</p>
-            <p><span>平倉 (SELL)</span>：把手上的幣賣掉，獲利了結或停損。</p>
-            <p><span>觀望 (PASS)</span>：什麼都不做，讓 K 線走一分鐘。</p>
-            <p><span>投入比例(%)</span>：每次買入要用掉多少比例的可用資金。</p>
-            <p><span>槓桿(1-10x)</span>：借錢放大你的獲利，但虧損也會放大，歸零就破產！</p>
-        </div>
-
-        <div class="setup-group">
-            <span class="setup-label">1. 選擇初始資金 (USDT)</span>
-            <div class="cap-btn-group">
-                <button class="cap-btn" onclick="selectCapital(100)">100</button>
-                <button class="cap-btn" onclick="selectCapital(500)">500</button>
-                <button class="cap-btn active" onclick="selectCapital(1000)">1000</button>
-            </div>
-
-            <span class="setup-label">2. 選擇開局槓桿 (<span id="levDisplay">1</span>x)</span>
-            <input type="range" id="leverageSlider" min="1" max="10" step="1" value="1" oninput="updateLev(this.value)" style="width: 100%;">
-        </div>
-
-        <button onclick="startGame()" style="background: var(--up-color); color: white; width: 100%; max-width: 350px; padding: 15px;">開始遊戲</button>
-    </div>
-
     <div class="dashboard">
         <div class="stat-box">
-            <div class="label">餘額 (USDT)</div>
+            <div class="label">餘額 (U)</div>
             <div id="balance" class="value">0.00</div>
         </div>
         <div class="stat-box">
             <div class="label">持倉 (BTC)</div>
             <div id="position" class="value">0.0000</div>
         </div>
+        <div id="mute-btn" onclick="toggleMute()">🔊</div>
+        
         <div class="stat-box">
-            <div class="label">總資產 (USDT)</div>
+            <div class="label">總資產 (U)</div>
             <div id="total-equity" class="value" style="color: var(--accent);">0.00</div>
         </div>
         <div class="stat-box">
-            <div class="label">未實現盈虧 (<span id="inGameLev">1</span>x)</div>
+            <div class="label">盈虧 (<span id="inGameLev">1</span>x)</div>
             <div id="unrealized-pnl" style="font-weight: bold;">--</div>
         </div>
     </div>
@@ -205,45 +186,64 @@
     </div>
 
     <div id="overlay" class="fullscreen-overlay" style="display: none; background: rgba(0,0,0,0.95);">
-        <h2 id="rank-title" style="font-size: 36px; margin: 0; text-shadow: 2px 2px #000;"></h2>
-        <div id="rank-subtitle" style="font-size: 16px; margin-bottom: 20px; font-weight: bold;"></div>
+        <h2 id="rank-title" style="font-size: 32px; margin: 0; text-shadow: 2px 2px #000;"></h2>
+        <div id="rank-subtitle" style="font-size: 14px; margin-bottom: 15px; font-weight: bold;"></div>
         
-        <div style="background: var(--card-bg); padding: 20px; border-radius: 10px; text-align: left; width: 100%; max-width: 300px; margin-bottom: 30px;">
-            <p style="margin: 5px 0;">初始本金: <span id="res-cap" style="float: right; color: white;"></span></p>
-            <p style="margin: 5px 0;">使用槓桿: <span id="res-lev" style="float: right; color: white;"></span></p>
-            <hr style="border-color: #333; margin: 10px 0;">
-            <p style="margin: 5px 0;">最終資產: <span id="res-eq" style="float: right; font-weight:bold;"></span></p>
-            <p style="margin: 5px 0;">投資報酬: <span id="res-roi" style="float: right; font-weight:bold;"></span></p>
+        <div style="background: var(--card-bg); padding: 15px; border-radius: 10px; text-align: left; width: 100%; max-width: 300px; margin-bottom: 20px;">
+            <p style="margin: 4px 0; font-size: 14px;">初始本金: <span id="res-cap" style="float: right; color: white;"></span></p>
+            <p style="margin: 4px 0; font-size: 14px;">使用槓桿: <span id="res-lev" style="float: right; color: white;"></span></p>
+            <hr style="border-color: #333; margin: 8px 0;">
+            <p style="margin: 4px 0; font-size: 14px;">最終資產: <span id="res-eq" style="float: right; font-weight:bold;"></span></p>
+            <p style="margin: 4px 0; font-size: 14px;">投資報酬: <span id="res-roi" style="float: right; font-weight:bold;"></span></p>
         </div>
 
         <button onclick="showStartScreen()" style="background: var(--accent); color: black; width: 220px; padding: 15px;">再玩一次</button>
     </div>
 
+    <div id="start-screen" class="fullscreen-overlay">
+        <h1 style="color: white; margin-bottom: 15px; font-size: 24px;">8-BIT 交易生存戰</h1>
+        
+        <div class="tutorial-box">
+            <h3>📜 菜鳥必讀</h3>
+            <p><span>買入 (BUY)</span>：看漲！把錢投進去。</p>
+            <p><span>平倉 (SELL)</span>：獲利了結或停損，換回現金。</p>
+            <p><span>觀望 (PASS)</span>：觀查行情，跳過一分鐘。</p>
+            <p><span>槓桿(1-10x)</span>：放大獲利，但也可能一秒爆倉！</p>
+        </div>
+
+        <div class="setup-group">
+            <span class="setup-label">1. 選擇初始資金 (USDT)</span>
+            <div class="cap-btn-group">
+                <button class="cap-btn" onclick="selectCapital(100)">100</button>
+                <button class="cap-btn" onclick="selectCapital(500)">500</button>
+                <button class="cap-btn active" onclick="selectCapital(1000)">1000</button>
+            </div>
+
+            <span class="setup-label">2. 選擇開局槓桿 (<span id="levDisplay">1</span>x)</span>
+            <input type="range" id="leverageSlider" min="1" max="10" step="1" value="1" oninput="updateLev(this.value)" style="width: 100%;">
+        </div>
+
+        <button onclick="startGame()" style="background: var(--up-color); color: white; width: 100%; max-width: 350px; padding: 15px;">開始遊戲</button>
+    </div>
+
 <script>
     const audioCtx = new (window.AudioContext || window.webkitAudioContext)();
-    
-    // 綁定 GitHub 上的音樂檔案
     const bgmAudio = new Audio('./bgm.mp3'); 
     bgmAudio.loop = true;  
     bgmAudio.volume = 0.4; 
 
     let isMuted = false;
 
-    // 靜音切換功能
     function toggleMute() {
         isMuted = !isMuted;
         bgmAudio.muted = isMuted;
         const btn = document.getElementById('mute-btn');
-        btn.innerText = isMuted ? "🔇 靜音" : "🔊 音效";
-        btn.style.borderColor = isMuted ? "#ff3b30" : "#444";
-        btn.style.color = isMuted ? "#ff3b30" : "var(--text-dim)";
-        
-        if (!isMuted && audioCtx.state === 'suspended') {
-            audioCtx.resume();
-        }
+        btn.innerText = isMuted ? "🔇" : "🔊";
+        btn.style.borderColor = isMuted ? "#ff3b30" : "#555";
+        btn.style.color = isMuted ? "#ff3b30" : "white";
+        if (!isMuted && audioCtx.state === 'suspended') audioCtx.resume();
     }
 
-    // 8-bit 音效合成
     function playSound(type) {
         if (isMuted) return;
         if (audioCtx.state === 'suspended') audioCtx.resume();
@@ -251,7 +251,6 @@
         const g = audioCtx.createGain();
         osc.connect(g); g.connect(audioCtx.destination);
         const now = audioCtx.currentTime;
-
         if (type === 'buy') {
             osc.type = 'square';
             osc.frequency.setValueAtTime(987.77, now);
@@ -275,14 +274,7 @@
         }
     }
 
-    let initCapital = 1000;
-    let leverage = 1;
-    let balance = 1000;
-    let totalMargin = 0; 
-    let btcPosition = 0;
-    let avgCost = 0;
-    let marketData = [];
-    let currentStep = 10;
+    let initCapital = 1000, leverage = 1, balance = 1000, totalMargin = 0, btcPosition = 0, avgCost = 0, marketData = [], currentStep = 10;
     const TOTAL_STEPS = 60;
 
     function selectCapital(val) {
@@ -304,141 +296,90 @@
     }
 
     function startGame() {
-        if (!isMuted && bgmAudio.paused) {
-            bgmAudio.play().catch(e => console.log("等待使用者互動以播放音樂"));
-        }
-        
-        balance = initCapital;
-        totalMargin = 0;
-        btcPosition = 0;
-        avgCost = 0;
-        currentStep = 10;
+        if (!isMuted && bgmAudio.paused) bgmAudio.play().catch(e => {});
+        balance = initCapital; totalMargin = 0; btcPosition = 0; avgCost = 0; currentStep = 10;
         document.getElementById('inGameLev').innerText = leverage;
-        
         marketData = [];
         let price = 50000 + Math.random() * 20000;
         for (let i = 0; i < 100; i++) {
             let open = price;
             let vol = (Math.random() > 0.8) ? 0.05 : 0.015; 
-            let change = open * vol * (Math.random() - 0.5);
+            let change = open * vol * (Math.random() - 0.48);
             let close = open + change;
             marketData.push({ open, close, high: Math.max(open, close) + open*0.002, low: Math.min(open, close) - open*0.002 });
             price = close;
         }
-
         document.getElementById('start-screen').style.display = 'none';
-        resizeCanvas();
-        updateUI();
-        draw();
+        resizeCanvas(); updateUI(); draw();
     }
 
-    function updateSliderLabel(val) {
-        document.getElementById('sliderLabel').innerText = val + "%";
-    }
+    function updateSliderLabel(val) { document.getElementById('sliderLabel').innerText = val + "%"; }
 
-    const canvas = document.getElementById('mainChart');
-    const ctx = canvas.getContext('2d');
-
+    const canvas = document.getElementById('mainChart'), ctx = canvas.getContext('2d');
     function resizeCanvas() {
         const rect = canvas.parentElement.getBoundingClientRect();
-        canvas.width = rect.width;
-        canvas.height = rect.height;
+        canvas.width = rect.width; canvas.height = rect.height;
     }
     window.addEventListener('resize', () => { resizeCanvas(); if(marketData.length > 0) draw(); });
 
     function draw() {
         const w = canvas.width, h = canvas.height;
         if(w === 0 || h === 0) return;
-
         const displayCount = 30;
         const visibleData = marketData.slice(Math.max(0, currentStep - displayCount), currentStep);
-        const minP = Math.min(...visibleData.map(d => d.low)) * 0.995;
-        const maxP = Math.max(...visibleData.map(d => d.high)) * 1.005;
-        const range = maxP - minP;
-        const cW = w / displayCount;
-
+        const minP = Math.min(...visibleData.map(d => d.low)) * 0.995, maxP = Math.max(...visibleData.map(d => d.high)) * 1.005;
+        const range = maxP - minP, cW = w / displayCount;
         ctx.clearRect(0,0,w,h);
         visibleData.forEach((d, i) => {
-            const x = i * cW + 2;
-            const getY = (p) => h - ((p - minP) / range) * h;
+            const x = i * cW + 2, getY = (p) => h - ((p - minP) / range) * h;
             ctx.fillStyle = d.close >= d.open ? '#00c087' : '#ff3b30';
-            
-            const bodyTop = getY(Math.max(d.open, d.close));
-            const bodyBottom = getY(Math.min(d.open, d.close));
+            const bodyTop = getY(Math.max(d.open, d.close)), bodyBottom = getY(Math.min(d.open, d.close));
             ctx.fillRect(x, bodyTop, cW - 4, Math.max(1, bodyBottom - bodyTop));
-            
             ctx.strokeStyle = ctx.fillStyle;
             ctx.beginPath(); ctx.moveTo(x + cW/2 - 2, getY(d.high)); ctx.lineTo(x + cW/2 - 2, getY(d.low)); ctx.stroke();
         });
-
-        const lastPrice = marketData[currentStep-1].close;
-        const tag = document.getElementById('price-tag');
-        tag.style.top = (h - ((lastPrice - minP) / range) * h - 10) + 'px';
-        tag.innerText = lastPrice.toFixed(1);
+        const lastPrice = marketData[currentStep-1].close, tag = document.getElementById('price-tag');
+        tag.style.top = (h - ((lastPrice - minP) / range) * h - 10) + 'px'; tag.innerText = lastPrice.toFixed(1);
     }
 
     function action(type) {
         const price = marketData[currentStep-1].close;
-
         if (type === 'buy') {
             const pct = parseInt(document.getElementById('buyAmountSlider').value) / 100;
             const marginToUse = balance * pct;
-            
             if (marginToUse >= 1) { 
                 const positionSize = (marginToUse * leverage) / price; 
                 avgCost = ((avgCost * btcPosition) + (price * positionSize)) / (btcPosition + positionSize);
-                btcPosition += positionSize;
-                balance -= marginToUse;
-                totalMargin += marginToUse;
+                btcPosition += positionSize; balance -= marginToUse; totalMargin += marginToUse;
                 playSound('buy');
-            } else {
-                showMsg("餘額不足！"); playSound('error'); return;
-            }
+            } else { showMsg("餘額不足！"); playSound('error'); return; }
         } else if (type === 'sell') {
             if (btcPosition > 0) {
                 const pnl = (price - avgCost) * btcPosition;
-                balance += (totalMargin + pnl); 
-                btcPosition = 0; totalMargin = 0; avgCost = 0;
+                balance += (totalMargin + pnl); btcPosition = 0; totalMargin = 0; avgCost = 0;
                 playSound('sell');
-            } else {
-                showMsg("手上沒單！"); playSound('error'); return;
-            }
+            } else { showMsg("手上沒單！"); playSound('error'); return; }
         }
-
-        currentStep++;
-        checkStatus();
+        currentStep++; checkStatus();
     }
 
     function checkStatus() {
-        const price = marketData[currentStep-1].close;
-        const pnl = (price - avgCost) * btcPosition;
-        const equity = balance + totalMargin + pnl;
-
+        const price = marketData[currentStep-1].close, pnl = (price - avgCost) * btcPosition, equity = balance + totalMargin + pnl;
         if (equity <= 0) {
-            balance = 0; totalMargin = 0; btcPosition = 0;
-            draw(); updateUI();
-            playSound('liq');
-            endGame(true);
-            return;
+            balance = 0; totalMargin = 0; btcPosition = 0; draw(); updateUI();
+            playSound('liq'); endGame(true); return;
         }
-
         if (currentStep >= TOTAL_STEPS + 10) {
             if (btcPosition > 0) balance += (totalMargin + pnl);
             endGame(false);
-        } else {
-            draw(); updateUI();
-        }
+        } else { draw(); updateUI(); }
     }
 
     function updateUI() {
-        const price = marketData[currentStep-1].close;
-        const pnl = btcPosition > 0 ? (price - avgCost) * btcPosition : 0;
-        const equity = balance + totalMargin + pnl;
-        
+        const price = marketData[currentStep-1].close, pnl = btcPosition > 0 ? (price - avgCost) * btcPosition : 0, equity = balance + totalMargin + pnl;
         document.getElementById('balance').innerText = balance.toFixed(2);
         document.getElementById('position').innerText = btcPosition.toFixed(4);
         document.getElementById('total-equity').innerText = equity.toFixed(2);
-        
         const pnlEl = document.getElementById('unrealized-pnl');
         pnlEl.innerText = (pnl >= 0 ? '+' : '') + pnl.toFixed(2);
         pnlEl.style.color = pnl >= 0 ? 'var(--up-color)' : 'var(--down-color)';
@@ -446,46 +387,29 @@
     }
 
     function showMsg(t) {
-        const b = document.getElementById('msg-box');
-        b.innerText = t; b.style.display = 'block';
+        const b = document.getElementById('msg-box'); b.innerText = t; b.style.display = 'block';
         setTimeout(() => b.style.display = 'none', 1000);
     }
 
     function endGame(isLiq) {
         document.getElementById('overlay').style.display = 'flex';
-        
-        const finalEquity = isLiq ? 0 : balance;
-        const roi = ((finalEquity - initCapital) / initCapital) * 100;
-        
-        let rank = ""; let sub = ""; let color = "";
-
-        if (isLiq || roi <= -90) {
-            rank = "RANK: F"; sub = "☠️ 爆倉歸零 / 睡公園"; color = "var(--down-color)";
-        } else if (roi < 0) {
-            rank = "RANK: C"; sub = "🧼 虧損出場 / 回去洗碗"; color = "#ff9500";
-        } else if (roi >= 0 && roi < 50) {
-            rank = "RANK: B"; sub = "🍀 運氣不錯的新手"; color = "#34c759";
-        } else if (roi >= 50 && roi < 200) {
-            rank = "RANK: A"; sub = "🔥 專業操盤手"; color = "var(--up-color)";
-        } else {
-            rank = "RANK: SSS"; sub = "👑 幣圈神級人物"; color = "var(--accent)";
-            if(leverage >= 5) sub = "👑 賭神再世 (高槓桿暴富)";
-        }
-
-        document.getElementById('rank-title').innerText = rank;
-        document.getElementById('rank-title').style.color = color;
-        document.getElementById('rank-subtitle').innerText = sub;
-        document.getElementById('rank-subtitle').style.color = color;
-
+        const finalEquity = isLiq ? 0 : balance, roi = ((finalEquity - initCapital) / initCapital) * 100;
+        let rank = "", sub = "", color = "";
+        if (isLiq || roi <= -90) { rank = "RANK: F"; sub = "☠️ 爆倉歸零 / 睡公園"; color = "var(--down-color)"; }
+        else if (roi < 0) { rank = "RANK: C"; sub = "🧼 虧損出場 / 回去洗碗"; color = "#ff9500"; }
+        else if (roi >= 0 && roi < 50) { rank = "RANK: B"; sub = "🍀 運氣不錯的新手"; color = "#34c759"; }
+        else if (roi >= 50 && roi < 200) { rank = "RANK: A"; sub = "🔥 專業操盤手"; color = "var(--up-color)"; }
+        else { rank = "RANK: SSS"; sub = "👑 幣圈神級人物"; color = "var(--accent)"; }
+        document.getElementById('rank-title').innerText = rank; document.getElementById('rank-title').style.color = color;
+        document.getElementById('rank-subtitle').innerText = sub; document.getElementById('rank-subtitle').style.color = color;
         document.getElementById('res-cap').innerText = initCapital + " U";
         document.getElementById('res-lev').innerText = leverage + "x";
-        
         document.getElementById('res-eq').innerText = finalEquity.toFixed(2) + " U";
-        document.getElementById('res-eq').style.color = finalEquity > initCapital ? "var(--up-color)" : (finalEquity === 0 ? "var(--down-color)" : "white");
-        
+        document.getElementById('res-eq').style.color = finalEquity > initCapital ? "var(--up-color)" : "white";
         document.getElementById('res-roi').innerText = (roi >= 0 ? "+" : "") + roi.toFixed(2) + "%";
         document.getElementById('res-roi').style.color = finalEquity > initCapital ? "var(--up-color)" : "var(--down-color)";
     }
+    window.onload = () => { setTimeout(resizeCanvas, 100); };
 </script>
 </body>
 </html>
