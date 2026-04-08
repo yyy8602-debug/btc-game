@@ -125,18 +125,19 @@
             display: none; z-index: 50; font-weight: bold; white-space: nowrap;
         }
 
-        /* 靜音按鈕樣式 */
+        /* 靜音按鈕樣式 (優化版：微縮、半透明) */
         #mute-btn {
-            position: absolute; top: 15px; right: 15px;
-            background: var(--bg-color); border: 2px solid #555;
-            color: white; font-family: inherit; font-size: 12px; font-weight: bold;
-            padding: 5px 10px; border-radius: 6px; cursor: pointer; z-index: 1000;
+            position: absolute; top: 12px; right: 12px;
+            background: rgba(30, 35, 41, 0.8); border: 1px solid #444;
+            color: var(--text-dim); font-family: inherit; font-size: 11px; font-weight: bold;
+            padding: 4px 8px; border-radius: 4px; cursor: pointer; z-index: 1000;
+            backdrop-filter: blur(2px);
         }
     </style>
 </head>
 <body>
 
-    <button id="mute-btn" onclick="toggleMute()">音效: 開啟</button>
+    <button id="mute-btn" onclick="toggleMute()">🔊 音效</button>
 
     <div id="start-screen" class="fullscreen-overlay">
         <h1 style="color: white; margin-bottom: 20px;">8-BIT 交易生存戰</h1>
@@ -232,8 +233,11 @@
     function toggleMute() {
         isMuted = !isMuted;
         bgmAudio.muted = isMuted;
-        document.getElementById('mute-btn').innerText = isMuted ? "音效: 關閉" : "音效: 開啟";
-        document.getElementById('mute-btn').style.borderColor = isMuted ? "#ff3b30" : "#555";
+        const btn = document.getElementById('mute-btn');
+        btn.innerText = isMuted ? "🔇 靜音" : "🔊 音效";
+        btn.style.borderColor = isMuted ? "#ff3b30" : "#444";
+        btn.style.color = isMuted ? "#ff3b30" : "var(--text-dim)";
+        
         if (!isMuted && audioCtx.state === 'suspended') {
             audioCtx.resume();
         }
