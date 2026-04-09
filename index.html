@@ -23,7 +23,7 @@
         #surrender-btn { background: rgba(255, 59, 48, 0.15); border-color: var(--down-color); color: #ff6b6b; }
 
         #chart-container { flex: 1 1 0%; position: relative; background: var(--bg-color); overflow: hidden; touch-action: none; }
-        canvas { position: absolute; top: 0; left: 0; width: 100%; height: 100%; display: block; cursor: grab;}
+        canvas { position: absolute; top: 0; left: 0; width: 100%; height: 100%; display: block; touch-action: none;}
         canvas:active { cursor: grabbing; }
         #price-tag { position: absolute; right: 5px; background: rgba(255,255,255,0.1); padding: 2px 5px; font-size: 11px; border-radius: 4px; pointer-events: none; z-index: 2; }
         
@@ -91,7 +91,6 @@
         
         #enter-market-btn { background: var(--up-color); color: white; width: 100%; max-width: 200px; padding: 12px; border-radius: 8px; font-size: 14px; margin: 15px auto 0 auto; display: block; box-shadow: 0 4px 10px rgba(0, 192, 135, 0.4); }
 
-        /* 新增：回顧線圖叫出結算的浮動按鈕 */
         #restore-overlay-btn { position: absolute; bottom: 20px; right: 20px; background: var(--accent); color: black; font-weight: bold; padding: 10px 15px; border-radius: 20px; font-size: 13px; display: none; z-index: 90; box-shadow: 0 4px 10px rgba(0,0,0,0.5); cursor: pointer; border: 1px solid white;}
     </style>
 </head>
@@ -236,6 +235,11 @@
     let visibleCount = 30;
     let isDragging = false, startX = 0, startPan = 0;
     
+    // 多點觸控 (兩指縮放) 變數
+    let activePointers = {};
+    let initialPinchDist = null;
+    let initialPinchCount = 30;
+
     window.newsAlerts = {}; 
 
     const TOTAL_STEPS = 60; 
@@ -269,25 +273,13 @@
         const btnGroup = document.getElementById('main-btn-group');
         const shortBtn = document.getElementById('btn-short-action');
         const dashShort = document.getElementById('dash-short');
-        
-        if(isChecked) {
-            btnGroup.classList.remove('no-short');
-            shortBtn.style.display = 'block';
-            dashShort.style.display = 'flex';
-        } else {
-            btnGroup.classList.add('no-short');
-            shortBtn.style.display = 'none';
-            dashShort.style.display = 'none';
-        }
+        if(isChecked) { btnGroup.classList.remove('no-short'); shortBtn.style.display = 'block'; dashShort.style.display = 'flex'; } 
+        else { btnGroup.classList.add('no-short'); shortBtn.style.display = 'none'; dashShort.style.display = 'none'; }
     }
 
     function easyStart() {
-        isEasyMode = true;
-        document.getElementById('allowShortToggle').checked = false;
-        toggleShortMode(false);
-        document.getElementById('leverageSlider').value = 3;
-        updateLev(3);
-        startGame(true);
+        isEasyMode = true; document.getElementById('allowShortToggle').checked = false; toggleShortMode(false);
+        document.getElementById('leverageSlider').value = 3; updateLev(3); startGame(true);
     }
 
     function playSound(type) {
@@ -301,21 +293,15 @@
     }
 
     function generateMarketData() {
-        window.newsAlerts = {}; 
-        let data = [];
-        const isBTC = coinName === 'BTC';
-        const basePrice = isBTC ? 50000 + Math.random()*20000 : 0.1 + Math.random()*0.3; 
-        
-        const vol = isBTC ? 0.025 : 0.06; 
-        const eventVol = isBTC ? 0.015 : 0.035; 
-
+        window.newsAlerts = {}; let data = [];
+        const isBTC = coinName === 'BTC'; const basePrice = isBTC ? 50000 + Math.random()*20000 : 0.1 + Math.random()*0.3; 
+        const vol = isBTC ? 0.025 : 0.06; const eventVol = isBTC ? 0.015 : 0.035; 
         let returns = new Array(120).fill(0);
 
         let currentTrendType = 0;
         for(let i=0; i<120; i++) {
             let chunkIndex = i % 6; 
             if (chunkIndex === 0) currentTrendType = Math.floor(Math.random() * 5);
-            
             let trendDrift = 0;
             if (currentTrendType === 0) trendDrift = vol * 0.35;
             else if (currentTrendType === 1) trendDrift = -vol * 0.35;
@@ -332,16 +318,13 @@
             if (Math.random() < 0.12 && (i - lastSpikeIdx > 1)) {
                 let spikeDir = Math.random() > 0.5 ? 1 : -1;
                 let mediumSpike = vol * (1.2 + Math.random() * 0.8) * spikeDir;
-                returns[i] += mediumSpike;
-                lastSpikeIdx = i;
+                returns[i] += mediumSpike; lastSpikeIdx = i;
             }
         }
 
         let numPatterns = 1 + Math.floor(Math.random() * 2);
         for(let p=0; p<numPatterns; p++) {
-            let startIdx = 10 + Math.floor(Math.random() * 40); 
-            let type = Math.floor(Math.random() * 4); 
-            let intensity = eventVol * (3 + Math.random()*2); 
+            let startIdx = 10 + Math.floor(Math.random() * 40); let type = Math.floor(Math.random() * 4); let intensity = eventVol * (3 + Math.random()*2); 
             if(type === 0) { returns[startIdx] = intensity; returns[startIdx+1] = intensity; returns[startIdx+2] = -intensity; returns[startIdx+3] = -intensity; }
             else if(type === 1) { returns[startIdx] = -intensity; returns[startIdx+1] = -intensity; returns[startIdx+2] = intensity; returns[startIdx+3] = intensity; }
             else if(type === 2) { returns[startIdx+3] = intensity * 2; }
@@ -350,10 +333,7 @@
 
         let hasNews = Math.random() > 0.3; 
         if(hasNews) {
-            let alertIndex = 15 + Math.floor(Math.random() * 20); 
-            let execIndex = alertIndex + 1 + Math.floor(Math.random() * 3); 
-            let isBullNews = Math.random() > 0.5;
-            let isFakeout = Math.random() > 0.4; 
+            let alertIndex = 15 + Math.floor(Math.random() * 20); let execIndex = alertIndex + 1 + Math.floor(Math.random() * 3); let isBullNews = Math.random() > 0.5; let isFakeout = Math.random() > 0.4; 
             const bullNews = ["突發：交戰國簽訂停戰協議！", "突發：聯準會緊急降息兩碼！", "突發：馬斯克發推力挺！", "突發：蘋果宣布將比特幣納入公司資產儲備！", "突發：中東土豪國主權基金宣布重倉買入！", "突發：SEC 意外批准所有現貨 ETF 申請！", "突發：某神祕巨鯨直接銷毀了總量 10% 的代幣！", "突發：亞馬遜宣布全面接受加密貨幣支付！", "突發：知名支付巨頭整合加密貨幣結算系統！", "突發：某大國最高法院裁定加密貨幣完全合法！", "突發：SEC 宣布即將推出全面性加密貨幣監管新規！", "突發：聯準會宣布維持利率不變，鮑爾會後聲明語帶玄機！", "突發：全球最大交易所突然暫停提幣，官方稱系統重大升級！"];
             const bearNews = ["突發：川普向伊朗宣戰！恐慌蔓延！", "突發：聯準會意外升息！", "突發：最大交易所遭駭客攻擊！", "突發：美政府錢包突遭轉出 20 萬枚比特幣砸盤！", "突發：最大穩定幣發行商爆出儲備金挪用醜聞！", "突發：某大國宣布全面封殺並強制沒收加密資產！", "突發：知名公鏈遭 51% 算力攻擊，網路大癱瘓！", "突發：華爾街巨頭宣布清倉所有加密貨幣資產！", "突發：核心開發團隊宣布內訌並放棄維護該項目！", "突發：馬斯克發推怒退追蹤，並痛批該幣是騙局！", "突發：沉睡十年的遠古巨鯨錢包突然甦醒，轉移巨額資產！", "突發：開發團隊突然提前解鎖高達 20% 的代幣總量！", "突發：核心社群爆發重大分歧，知名公鏈恐面臨硬分叉！"];
             window.newsAlerts[alertIndex] = isBullNews ? bullNews[Math.floor(Math.random()*bullNews.length)] : bearNews[Math.floor(Math.random()*bearNews.length)];
@@ -369,13 +349,9 @@
 
         let prevClose = basePrice;
         for(let i=0; i<120; i++) {
-            let open = prevClose;
-            let targetReturn = returns[i];
-            let close = Math.max(0.00001, open * (1 + targetReturn));
-            let bodySize = Math.abs(open - close);
-            let baseWick = open * vol * 0.15; 
-            let upperWick = Math.random() * (bodySize * 0.6 + baseWick);
-            let lowerWick = Math.random() * (bodySize * 0.6 + baseWick);
+            let open = prevClose; let targetReturn = returns[i]; let close = Math.max(0.00001, open * (1 + targetReturn));
+            let bodySize = Math.abs(open - close); let baseWick = open * vol * 0.15; 
+            let upperWick = Math.random() * (bodySize * 0.6 + baseWick); let lowerWick = Math.random() * (bodySize * 0.6 + baseWick);
             data.push({open, close, high: Math.max(open, close) + upperWick, low: Math.max(0.00001, Math.min(open, close) - lowerWick)});
             prevClose = close;
         }
@@ -385,49 +361,74 @@
     function startGame(isEasy = false) {
         if(!isEasy) isEasyMode = false;
         playerName = document.getElementById('playerName').value || "無名韭菜";
-        bgmAudio.playbackRate = 1.0; 
-        bgmAudio.currentTime = 0; 
+        bgmAudio.playbackRate = 1.0; bgmAudio.currentTime = 0; 
         if (bgmAudio.paused && !isMuted) bgmAudio.play().catch(e => {});
         
         balance = initCapital; currentStep = 10;
-        longPos = 0; longMargin = 0; longCost = 0;
-        shortPos = 0; shortMargin = 0; shortCost = 0;
+        longPos = 0; longMargin = 0; longCost = 0; shortPos = 0; shortMargin = 0; shortCost = 0;
         hasLostInEasy = false; panOffset = 0; visibleCount = 30;
-        document.getElementById('inGameLev').innerText = leverage;
-        document.getElementById('alert-box').style.display = 'none';
-        document.getElementById('restore-overlay-btn').style.display = 'none'; // 確保重新開始時隱藏按鈕
+        document.getElementById('inGameLev').innerText = leverage; document.getElementById('alert-box').style.display = 'none'; document.getElementById('restore-overlay-btn').style.display = 'none'; 
         if (isEasyMode) document.getElementById('btn-next').classList.add('btn-flash');
-        marketData = generateMarketData(); 
-        document.getElementById('start-screen').style.display = 'none';
+        marketData = generateMarketData(); document.getElementById('start-screen').style.display = 'none';
         resizeCanvas(); updateUI(); draw();
     }
 
     const canvas = document.getElementById('mainChart'), ctx = canvas.getContext('2d');
     function resizeCanvas() { const rect = canvas.parentElement.getBoundingClientRect(); canvas.width = rect.width; canvas.height = rect.height; }
-    canvas.addEventListener('pointerdown', e => { 
-        // 若在回顧模式，允許自由滑動
-        isDragging = true; startX = e.clientX; startPan = panOffset; canvas.setPointerCapture(e.pointerId); 
+
+    // 【新增】雙指縮放 (Pinch-to-Zoom) 邏輯
+    canvas.addEventListener('pointerdown', e => {
+        activePointers[e.pointerId] = e;
+        canvas.setPointerCapture(e.pointerId);
+        let keys = Object.keys(activePointers);
+        if (keys.length === 2) {
+            isDragging = false;
+            let p1 = activePointers[keys[0]]; let p2 = activePointers[keys[1]];
+            initialPinchDist = Math.hypot(p1.clientX - p2.clientX, p1.clientY - p2.clientY);
+            initialPinchCount = visibleCount;
+        } else if (keys.length === 1) {
+            isDragging = true; startX = e.clientX; startPan = panOffset;
+        }
     });
+
     canvas.addEventListener('pointermove', e => {
-        if(!isDragging) return;
-        let dx = e.clientX - startX;
-        let candleW = canvas.width / visibleCount;
-        panOffset = startPan + (dx / candleW);
-        if(panOffset < 0) panOffset = 0;
-        let maxPan = currentStep - visibleCount;
-        // 如果不足整個畫面就不給滑太遠
-        if(maxPan < 0) maxPan = 0; 
-        if(panOffset > maxPan) panOffset = maxPan;
-        draw();
+        if (activePointers[e.pointerId]) activePointers[e.pointerId] = e;
+        let keys = Object.keys(activePointers);
+        if (keys.length === 2 && initialPinchDist) {
+            let p1 = activePointers[keys[0]]; let p2 = activePointers[keys[1]];
+            let currentDist = Math.hypot(p1.clientX - p2.clientX, p1.clientY - p2.clientY);
+            let zoomFactor = initialPinchDist / currentDist;
+            visibleCount = Math.floor(initialPinchCount * zoomFactor);
+            if(visibleCount < 10) visibleCount = 10;
+            if(visibleCount > 100) visibleCount = 100;
+            if(visibleCount > currentStep) visibleCount = currentStep;
+            let maxPan = currentStep - visibleCount;
+            if(maxPan < 0) maxPan = 0;
+            if(panOffset > maxPan) panOffset = maxPan;
+            draw();
+        } else if (keys.length === 1 && isDragging) {
+            let dx = e.clientX - startX; let candleW = canvas.width / visibleCount;
+            panOffset = startPan + (dx / candleW);
+            if(panOffset < 0) panOffset = 0;
+            let maxPan = currentStep - visibleCount;
+            if(maxPan < 0) maxPan = 0;
+            if(panOffset > maxPan) panOffset = maxPan;
+            draw();
+        }
     });
-    canvas.addEventListener('pointerup', e => { isDragging = false; canvas.releasePointerCapture(e.pointerId); });
+
+    const removePointer = e => {
+        delete activePointers[e.pointerId];
+        let keys = Object.keys(activePointers);
+        if (keys.length < 2) initialPinchDist = null;
+        if (keys.length === 0) isDragging = false;
+        else if (keys.length === 1) { isDragging = true; startX = activePointers[keys[0]].clientX; startPan = panOffset; }
+    };
+    canvas.addEventListener('pointerup', removePointer); canvas.addEventListener('pointercancel', removePointer);
 
     function zoomChart(delta) {
-        visibleCount += delta;
-        if(visibleCount < 10) visibleCount = 10;
-        if(visibleCount > 100) visibleCount = 100;
-        if(visibleCount > currentStep) visibleCount = currentStep;
-        draw();
+        visibleCount += delta; if(visibleCount < 10) visibleCount = 10; if(visibleCount > 100) visibleCount = 100;
+        if(visibleCount > currentStep) visibleCount = currentStep; draw();
     }
 
     function resetView() { visibleCount = 30; panOffset = 0; draw(); }
@@ -435,10 +436,8 @@
     function draw() {
         const w = canvas.width, h = canvas.height; if(w === 0 || h === 0) return;
         document.getElementById('reset-view-btn').style.display = (panOffset > 0.5 || visibleCount !== 30) ? 'flex' : 'none';
-        let endIndex = Math.floor(currentStep - panOffset);
-        let startIndex = Math.max(0, endIndex - visibleCount);
-        const visibleData = marketData.slice(startIndex, endIndex);
-        if(visibleData.length === 0) return;
+        let endIndex = Math.floor(currentStep - panOffset); let startIndex = Math.max(0, endIndex - visibleCount);
+        const visibleData = marketData.slice(startIndex, endIndex); if(visibleData.length === 0) return;
         const minP = Math.min(...visibleData.map(d => d.low)) * 0.995, maxP = Math.max(...visibleData.map(d => d.high)) * 1.005;
         const range = maxP - minP, cW = w / visibleCount;
         ctx.clearRect(0,0,w,h);
@@ -458,15 +457,13 @@
             ctx.fillRect(x, getY(Math.max(d.open, d.close)), cW - 4, Math.max(1, Math.abs(getY(d.open) - getY(d.close))));
             ctx.strokeStyle = ctx.fillStyle; ctx.beginPath(); ctx.moveTo(x + cW/2 - 2, getY(d.high)); ctx.lineTo(x + cW/2 - 2, getY(d.low)); ctx.stroke();
         });
-        const lastP = visibleData[visibleData.length-1].close;
-        const tag = document.getElementById('price-tag');
+        const lastP = visibleData[visibleData.length-1].close; const tag = document.getElementById('price-tag');
         tag.style.top = (h - ((lastP - minP) / range) * h - 10) + 'px'; tag.innerText = lastP.toFixed(coinName==='BTC'?1:4);
     }
 
     function action(type) {
         document.getElementById('btn-next').classList.remove('btn-flash'); 
-        const price = marketData[currentStep-1].close;
-        const margin = balance * (parseInt(document.getElementById('buyAmountSlider').value) / 100);
+        const price = marketData[currentStep-1].close; const margin = balance * (parseInt(document.getElementById('buyAmountSlider').value) / 100);
         if (type === 'long' || type === 'short') {
             if (margin < 0.1) { showMsg("餘額不足"); return; }
             const size = (margin * leverage) / price;
@@ -476,10 +473,8 @@
         } else if (type === 'closeAll') {
             if (longPos > 0 || shortPos > 0) {
                 const lp = (price - longCost) * longPos, sp = (shortCost - price) * shortPos;
-                if (isEasyMode && (lp + sp) < 0 && !hasLostInEasy) { showMsg("建議見好就收！", 2500); hasLostInEasy = true; } 
-                else { playSound('close'); }
-                balance += (longMargin + lp + shortMargin + sp);
-                longPos = 0; longMargin = 0; longCost = 0; shortPos = 0; shortMargin = 0; shortCost = 0;
+                if (isEasyMode && (lp + sp) < 0 && !hasLostInEasy) { showMsg("建議見好就收！", 2500); hasLostInEasy = true; } else { playSound('close'); }
+                balance += (longMargin + lp + shortMargin + sp); longPos = 0; longMargin = 0; longCost = 0; shortPos = 0; shortMargin = 0; shortCost = 0;
             } else { showMsg("手上沒單"); return; }
         }
         if(type === 'wait' || (type === 'closeAll' && longPos===0 && shortPos===0)) currentStep++;
@@ -494,12 +489,15 @@
             bgmAudio.playbackRate = 1.1; setTimeout(() => { if(ab.innerText.includes("📰")) ab.style.display = 'none'; }, 3500);
         }
         if (currentStep === ALERT_STEP) { const ab = document.getElementById('alert-box'); ab.innerText = "⚠️ 倒數 15 根 K 線！"; ab.style.background = "rgba(255, 59, 48, 0.95)"; ab.style.color = "white"; ab.style.display = 'block'; bgmAudio.playbackRate = 1.35; }
+        
+        // 【優化】劇烈震盪切換音樂門檻調降至 ±5% (0.05)
         const eqChange = (equity - lastEquity) / initCapital;
         if (now - lastJumpTime > 4000) {
-            if (eqChange > 0.15) { bgmAudio.currentTime = 29.5; showMsg("🚀 爽翻天！"); lastJumpTime = now; } 
-            else if (eqChange < -0.15) { bgmAudio.currentTime = 38.75; showMsg("💀 要被抬走了！"); lastJumpTime = now; }
+            if (eqChange > 0.05) { bgmAudio.currentTime = 29.5; showMsg("🚀 爽翻天！"); lastJumpTime = now; } 
+            else if (eqChange < -0.05) { bgmAudio.currentTime = 38.75; showMsg("💀 要被抬走了！"); lastJumpTime = now; }
         }
         lastEquity = equity;
+
         if (equity <= 0) { draw(); updateUI(); playSound('liq'); endGame(true, equity); return; }
         if (currentStep >= TOTAL_STEPS + 10) { if (longPos > 0 || shortPos > 0) balance = equity; endGame(false, balance); }
         else { draw(); updateUI(); }
@@ -507,10 +505,7 @@
 
     function updateUI() {
         const p = marketData[currentStep-1].close, lp = longPos > 0 ? (p - longCost) * longPos : 0, sp = shortPos > 0 ? (shortCost - p) * shortPos : 0, tp = lp + sp, eq = balance + longMargin + lp + shortMargin + sp;
-        document.getElementById('balance').innerText = balance.toFixed(2);
-        document.getElementById('long-pos').innerText = longPos.toFixed(coinName==='BTC'?4:0);
-        document.getElementById('short-pos').innerText = shortPos.toFixed(coinName==='BTC'?4:0);
-        document.getElementById('total-equity').innerText = eq.toFixed(2);
+        document.getElementById('balance').innerText = balance.toFixed(2); document.getElementById('long-pos').innerText = longPos.toFixed(coinName==='BTC'?4:0); document.getElementById('short-pos').innerText = shortPos.toFixed(coinName==='BTC'?4:0); document.getElementById('total-equity').innerText = eq.toFixed(2);
         const pEl = document.getElementById('unrealized-pnl'); pEl.innerText = (tp >= 0 ? '+' : '') + tp.toFixed(2); pEl.style.color = tp >= 0 ? 'var(--up-color)' : 'var(--down-color)';
         document.getElementById('sellBtn').disabled = (longPos <= 0 && shortPos <= 0);
     }
@@ -518,21 +513,15 @@
     function showMsg(t, d = 1200) { const b = document.getElementById('msg-box'); b.innerText = t; b.style.display = 'block'; setTimeout(() => b.style.display = 'none', d); }
 
     function endGame(isLiq, finalEquity) {
-        document.getElementById('overlay').style.display = 'flex';
-        document.getElementById('alert-box').style.display = 'none';
+        document.getElementById('overlay').style.display = 'flex'; document.getElementById('alert-box').style.display = 'none';
         currentUserRoi = ((finalEquity - initCapital) / initCapital) * 100;
 
+        // 【保留】結算畫面 2 秒專屬收尾音效
         if (!isMuted) {
             bgmAudio.pause(); 
-            if (currentUserRoi > 0) {
-                bgmAudio.currentTime = 29.5; 
-            } else {
-                bgmAudio.currentTime = 38.75; 
-            }
+            if (currentUserRoi > 0) { bgmAudio.currentTime = 29.5; } else { bgmAudio.currentTime = 38.75; }
             bgmAudio.play().catch(e => {});
-            setTimeout(() => {
-                bgmAudio.pause(); 
-            }, 2000);
+            setTimeout(() => { bgmAudio.pause(); }, 2000);
         }
 
         const alpha = currentUserRoi - (((marketData[currentStep-1].close - marketData[9].open) / marketData[9].open) * 100 * leverage);
@@ -557,23 +546,14 @@
         const saveBtn = document.getElementById('save-lb-btn'); saveBtn.innerText = "💾 記在排行榜"; saveBtn.disabled = false; saveBtn.style.opacity = "1";
     }
 
-    // 新增：隱藏與叫出結算面板的功能
-    function hideEndOverlay() {
-        document.getElementById('overlay').style.display = 'none';
-        document.getElementById('restore-overlay-btn').style.display = 'block';
-    }
-
-    function showEndOverlay() {
-        document.getElementById('overlay').style.display = 'flex';
-        document.getElementById('restore-overlay-btn').style.display = 'none';
-    }
+    function hideEndOverlay() { document.getElementById('overlay').style.display = 'none'; document.getElementById('restore-overlay-btn').style.display = 'block'; }
+    function showEndOverlay() { document.getElementById('overlay').style.display = 'flex'; document.getElementById('restore-overlay-btn').style.display = 'none'; }
 
     function saveToLeaderboard() {
         realLeaderboard.push({ name: playerName, coin: coinName, roi: currentUserRoi });
         realLeaderboard.sort((a, b) => b.roi - a.roi); realLeaderboard = realLeaderboard.slice(0, 10);
         localStorage.setItem('realCryptoLb', JSON.stringify(realLeaderboard));
-        const sb = document.getElementById('save-lb-btn'); sb.innerText = "✅ 已加入榜單"; sb.disabled = true; sb.style.opacity = "0.5";
-        openLeaderboard();
+        const sb = document.getElementById('save-lb-btn'); sb.innerText = "✅ 已加入榜單"; sb.disabled = true; sb.style.opacity = "0.5"; openLeaderboard();
     }
 
     function openLeaderboard() {
