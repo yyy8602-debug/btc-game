@@ -31,7 +31,6 @@
         .chart-btn { background: rgba(30,35,41,0.8); border: 1px solid #555; color: white; border-radius: 6px; width: 28px; height: 28px; font-size: 14px; display: flex; justify-content: center; align-items: center; cursor: pointer; backdrop-filter: blur(2px); }
         .chart-btn-wide { width: auto; padding: 0 8px; font-size: 11px; font-weight: bold; display: none; background: rgba(240, 185, 11, 0.2); border-color: var(--accent); color: var(--accent);}
 
-        /* 警告與新聞彈窗 */
         #alert-box { position: absolute; top: 15px; left: 50%; transform: translateX(-50%); background: rgba(255,59,48,0.9); padding: 6px 12px; border-radius: 20px; font-weight: bold; font-size: 11px; display: none; z-index: 10; border: 1px solid white; animation: pulse 1s infinite; white-space: nowrap; box-shadow: 0 4px 10px rgba(0,0,0,0.5); }
         @keyframes pulse { 0% { transform: translateX(-50%) scale(1); } 50% { transform: translateX(-50%) scale(1.05); } 100% { transform: translateX(-50%) scale(1); } }
         
@@ -194,10 +193,10 @@
         <div id="rank-subtitle" style="font-size: 13px; margin-bottom: 15px; font-weight: bold; line-height: 1.4;"></div>
         
         <div style="background: var(--card-bg); padding: 15px; border-radius: 10px; text-align: left; width: 100%; max-width: 300px; margin-bottom: 15px;">
-            <p style="margin: 4px 0; font-size: 13px; color:var(--accent);">憑實力賺的差價: <span id="res-alpha" style="float: right;"></span></p>
-            <p style="margin: 4px 0; font-size: 13px;">無腦放著賺: <span id="res-mkt" style="float: right;"></span></p>
+            <p style="margin: 4px 0; font-size: 13px; color:var(--text-dim);">操作次數: <span id="res-trades" style="float: right; color:white;"></span></p>
+            <p style="margin: 4px 0; font-size: 13px; color:var(--text-dim);">最長抱單: <span id="res-hold" style="float: right; color:white;"></span></p>
             <hr style="border-color: #333; margin: 8px 0;">
-            <p style="margin: 4px 0; font-size: 13px;">你的報酬率: <span id="res-roi" style="float: right;"></span></p>
+            <p style="margin: 4px 0; font-size: 14px; font-weight: bold;">最終報酬率: <span id="res-roi" style="float: right;"></span></p>
         </div>
 
         <div style="display: flex; gap: 10px; width: 100%; max-width: 300px; margin-bottom: 10px;">
@@ -231,11 +230,14 @@
     let allowShort = true, isEasyMode = false, hasLostInEasy = false;
     let currentUserRoi = 0; 
     
+    let tradeCount = 0;
+    let holdingSteps = 0;
+    let maxHoldingSteps = 0;
+
     let panOffset = 0; 
     let visibleCount = 30;
     let isDragging = false, startX = 0, startPan = 0;
     
-    // 多點觸控 (兩指縮放) 變數
     let activePointers = {};
     let initialPinchDist = null;
     let initialPinchCount = 30;
@@ -245,20 +247,10 @@
     const TOTAL_STEPS = 60; 
     const ALERT_STEP = 55; 
 
-    const funnyNames = [
-        "百倍槓桿猴", "天台吹風客", "插針受害者", "做空大師", "爆倉藝術家", 
-        "合約戰神", "保證金不足", "拔網線死忠粉", "吃融資費率度日", "扛單死不平", 
-        "多空雙殺", "止損是懦夫", "一秒上下幾十萬", "借錢抄底", "網格被套", 
-        "高點接盤俠", "低谷割肉人", "全倉逐倉分不清", "資金費率小偷", "爆倉信件收集者", 
-        "被強平的男人", "合約勝率0%", "永遠做反向", "看線圖發電", "K線圖畢卡索", 
-        "信仰充值失敗", "抄底抄到地下室", "做多做空都被割", "只賺個便當錢", "一單虧掉一棟樓"
-    ];
+    const funnyNames = ["百倍槓桿猴", "天台吹風客", "插針受害者", "做空大師", "爆倉藝術家", "合約戰神", "保證金不足", "拔網線死忠粉", "吃融資費率度日", "扛單死不平", "多空雙殺", "止損是懦夫", "借錢抄底", "全倉逐倉分不清", "資金費率小偷", "爆倉信件收集者", "被強平的男人", "永遠做反向", "看線圖發電", "K線圖畢卡索", "只賺個便當錢"];
 
     function rollName() { document.getElementById('playerName').value = funnyNames[Math.floor(Math.random() * funnyNames.length)]; }
-    function showAdvancedSettings() { 
-        document.getElementById('initial-buttons').style.display = 'none'; 
-        document.getElementById('advanced-settings').style.display = 'block'; 
-    }
+    function showAdvancedSettings() { document.getElementById('initial-buttons').style.display = 'none'; document.getElementById('advanced-settings').style.display = 'block'; }
 
     let realLeaderboard = JSON.parse(localStorage.getItem('realCryptoLb')) || [];
 
@@ -270,23 +262,16 @@
     
     function toggleShortMode(isChecked) {
         allowShort = isChecked;
-        const btnGroup = document.getElementById('main-btn-group');
-        const shortBtn = document.getElementById('btn-short-action');
-        const dashShort = document.getElementById('dash-short');
+        const btnGroup = document.getElementById('main-btn-group'), shortBtn = document.getElementById('btn-short-action'), dashShort = document.getElementById('dash-short');
         if(isChecked) { btnGroup.classList.remove('no-short'); shortBtn.style.display = 'block'; dashShort.style.display = 'flex'; } 
         else { btnGroup.classList.add('no-short'); shortBtn.style.display = 'none'; dashShort.style.display = 'none'; }
     }
 
-    function easyStart() {
-        isEasyMode = true; document.getElementById('allowShortToggle').checked = false; toggleShortMode(false);
-        document.getElementById('leverageSlider').value = 3; updateLev(3); startGame(true);
-    }
+    function easyStart() { isEasyMode = true; document.getElementById('allowShortToggle').checked = false; toggleShortMode(false); document.getElementById('leverageSlider').value = 3; updateLev(3); startGame(true); }
 
     function playSound(type) {
         if (isMuted) return; if (audioCtx.state === 'suspended') audioCtx.resume();
-        const osc = audioCtx.createOscillator(), g = audioCtx.createGain();
-        osc.connect(g); g.connect(audioCtx.destination);
-        const now = audioCtx.currentTime;
+        const osc = audioCtx.createOscillator(), g = audioCtx.createGain(); osc.connect(g); g.connect(audioCtx.destination); const now = audioCtx.currentTime;
         if (type === 'long') { osc.type = 'square'; osc.frequency.setValueAtTime(987, now); osc.frequency.setValueAtTime(1318, now + 0.08); g.gain.setValueAtTime(0.1, now); g.gain.setValueAtTime(0, now + 0.16); osc.start(); osc.stop(now + 0.16); }
         else if (type === 'short' || type === 'close') { osc.type = 'square'; osc.frequency.setValueAtTime(880, now); osc.frequency.exponentialRampToValueAtTime(110, now + 0.2); g.gain.setValueAtTime(0.1, now); g.gain.linearRampToValueAtTime(0, now + 0.2); osc.start(); osc.stop(now + 0.2); }
         else if (type === 'liq') { osc.type = 'sawtooth'; osc.frequency.setValueAtTime(100, now); g.gain.setValueAtTime(0.15, now); osc.start(); osc.stop(now + 0.5); }
@@ -366,7 +351,9 @@
         
         balance = initCapital; currentStep = 10;
         longPos = 0; longMargin = 0; longCost = 0; shortPos = 0; shortMargin = 0; shortCost = 0;
+        tradeCount = 0; holdingSteps = 0; maxHoldingSteps = 0;
         hasLostInEasy = false; panOffset = 0; visibleCount = 30;
+        
         document.getElementById('inGameLev').innerText = leverage; document.getElementById('alert-box').style.display = 'none'; document.getElementById('restore-overlay-btn').style.display = 'none'; 
         if (isEasyMode) document.getElementById('btn-next').classList.add('btn-flash');
         marketData = generateMarketData(); document.getElementById('start-screen').style.display = 'none';
@@ -376,61 +363,29 @@
     const canvas = document.getElementById('mainChart'), ctx = canvas.getContext('2d');
     function resizeCanvas() { const rect = canvas.parentElement.getBoundingClientRect(); canvas.width = rect.width; canvas.height = rect.height; }
 
-    // 【新增】雙指縮放 (Pinch-to-Zoom) 邏輯
     canvas.addEventListener('pointerdown', e => {
-        activePointers[e.pointerId] = e;
-        canvas.setPointerCapture(e.pointerId);
-        let keys = Object.keys(activePointers);
-        if (keys.length === 2) {
-            isDragging = false;
-            let p1 = activePointers[keys[0]]; let p2 = activePointers[keys[1]];
-            initialPinchDist = Math.hypot(p1.clientX - p2.clientX, p1.clientY - p2.clientY);
-            initialPinchCount = visibleCount;
-        } else if (keys.length === 1) {
-            isDragging = true; startX = e.clientX; startPan = panOffset;
-        }
+        activePointers[e.pointerId] = e; canvas.setPointerCapture(e.pointerId); let keys = Object.keys(activePointers);
+        if (keys.length === 2) { isDragging = false; let p1 = activePointers[keys[0]]; let p2 = activePointers[keys[1]]; initialPinchDist = Math.hypot(p1.clientX - p2.clientX, p1.clientY - p2.clientY); initialPinchCount = visibleCount; } 
+        else if (keys.length === 1) { isDragging = true; startX = e.clientX; startPan = panOffset; }
     });
 
     canvas.addEventListener('pointermove', e => {
-        if (activePointers[e.pointerId]) activePointers[e.pointerId] = e;
-        let keys = Object.keys(activePointers);
+        if (activePointers[e.pointerId]) activePointers[e.pointerId] = e; let keys = Object.keys(activePointers);
         if (keys.length === 2 && initialPinchDist) {
-            let p1 = activePointers[keys[0]]; let p2 = activePointers[keys[1]];
-            let currentDist = Math.hypot(p1.clientX - p2.clientX, p1.clientY - p2.clientY);
-            let zoomFactor = initialPinchDist / currentDist;
+            let p1 = activePointers[keys[0]]; let p2 = activePointers[keys[1]]; let currentDist = Math.hypot(p1.clientX - p2.clientX, p1.clientY - p2.clientY); let zoomFactor = initialPinchDist / currentDist;
             visibleCount = Math.floor(initialPinchCount * zoomFactor);
-            if(visibleCount < 10) visibleCount = 10;
-            if(visibleCount > 100) visibleCount = 100;
-            if(visibleCount > currentStep) visibleCount = currentStep;
-            let maxPan = currentStep - visibleCount;
-            if(maxPan < 0) maxPan = 0;
-            if(panOffset > maxPan) panOffset = maxPan;
-            draw();
+            if(visibleCount < 10) visibleCount = 10; if(visibleCount > 100) visibleCount = 100; if(visibleCount > currentStep) visibleCount = currentStep;
+            let maxPan = currentStep - visibleCount; if(maxPan < 0) maxPan = 0; if(panOffset > maxPan) panOffset = maxPan; draw();
         } else if (keys.length === 1 && isDragging) {
-            let dx = e.clientX - startX; let candleW = canvas.width / visibleCount;
-            panOffset = startPan + (dx / candleW);
-            if(panOffset < 0) panOffset = 0;
-            let maxPan = currentStep - visibleCount;
-            if(maxPan < 0) maxPan = 0;
-            if(panOffset > maxPan) panOffset = maxPan;
-            draw();
+            let dx = e.clientX - startX; let candleW = canvas.width / visibleCount; panOffset = startPan + (dx / candleW);
+            if(panOffset < 0) panOffset = 0; let maxPan = currentStep - visibleCount; if(maxPan < 0) maxPan = 0; if(panOffset > maxPan) panOffset = maxPan; draw();
         }
     });
 
-    const removePointer = e => {
-        delete activePointers[e.pointerId];
-        let keys = Object.keys(activePointers);
-        if (keys.length < 2) initialPinchDist = null;
-        if (keys.length === 0) isDragging = false;
-        else if (keys.length === 1) { isDragging = true; startX = activePointers[keys[0]].clientX; startPan = panOffset; }
-    };
+    const removePointer = e => { delete activePointers[e.pointerId]; let keys = Object.keys(activePointers); if (keys.length < 2) initialPinchDist = null; if (keys.length === 0) isDragging = false; else if (keys.length === 1) { isDragging = true; startX = activePointers[keys[0]].clientX; startPan = panOffset; } };
     canvas.addEventListener('pointerup', removePointer); canvas.addEventListener('pointercancel', removePointer);
 
-    function zoomChart(delta) {
-        visibleCount += delta; if(visibleCount < 10) visibleCount = 10; if(visibleCount > 100) visibleCount = 100;
-        if(visibleCount > currentStep) visibleCount = currentStep; draw();
-    }
-
+    function zoomChart(delta) { visibleCount += delta; if(visibleCount < 10) visibleCount = 10; if(visibleCount > 100) visibleCount = 100; if(visibleCount > currentStep) visibleCount = currentStep; draw(); }
     function resetView() { visibleCount = 30; panOffset = 0; draw(); }
 
     function draw() {
@@ -464,17 +419,19 @@
     function action(type) {
         document.getElementById('btn-next').classList.remove('btn-flash'); 
         const price = marketData[currentStep-1].close; const margin = balance * (parseInt(document.getElementById('buyAmountSlider').value) / 100);
+        
         if (type === 'long' || type === 'short') {
             if (margin < 0.1) { showMsg("餘額不足"); return; }
             const size = (margin * leverage) / price;
             if (type === 'long') { longCost = ((longCost * longPos) + (price * size)) / (longPos + size); longPos += size; longMargin += margin; playSound('long'); }
             else { shortCost = ((shortCost * shortPos) + (price * size)) / (shortPos + size); shortPos += size; shortMargin += margin; playSound('short'); }
-            balance -= margin;
+            balance -= margin; tradeCount++;
         } else if (type === 'closeAll') {
             if (longPos > 0 || shortPos > 0) {
                 const lp = (price - longCost) * longPos, sp = (shortCost - price) * shortPos;
                 if (isEasyMode && (lp + sp) < 0 && !hasLostInEasy) { showMsg("建議見好就收！", 2500); hasLostInEasy = true; } else { playSound('close'); }
                 balance += (longMargin + lp + shortMargin + sp); longPos = 0; longMargin = 0; longCost = 0; shortPos = 0; shortMargin = 0; shortCost = 0;
+                tradeCount++;
             } else { showMsg("手上沒單"); return; }
         }
         if(type === 'wait' || (type === 'closeAll' && longPos===0 && shortPos===0)) currentStep++;
@@ -484,20 +441,27 @@
     function checkStatus() {
         const price = marketData[currentStep-1].close, lp = longPos > 0 ? (price - longCost) * longPos : 0, sp = shortPos > 0 ? (shortCost - price) * shortPos : 0;
         const equity = balance + longMargin + lp + shortMargin + sp, now = Date.now();
+        
+        if (longPos > 0 || shortPos > 0) { holdingSteps++; if (holdingSteps > maxHoldingSteps) maxHoldingSteps = holdingSteps; } else { holdingSteps = 0; }
+
         if (window.newsAlerts[currentStep]) {
             const ab = document.getElementById('alert-box'); ab.innerText = "📰 " + window.newsAlerts[currentStep]; ab.style.background = "rgba(240, 185, 11, 0.95)"; ab.style.color = "black"; ab.style.display = 'block';
             bgmAudio.playbackRate = 1.1; setTimeout(() => { if(ab.innerText.includes("📰")) ab.style.display = 'none'; }, 3500);
         }
         if (currentStep === ALERT_STEP) { const ab = document.getElementById('alert-box'); ab.innerText = "⚠️ 倒數 15 根 K 線！"; ab.style.background = "rgba(255, 59, 48, 0.95)"; ab.style.color = "white"; ab.style.display = 'block'; bgmAudio.playbackRate = 1.35; }
         
-        // 【優化】劇烈震盪切換音樂門檻調降至 ±5% (0.05)
-        const eqChange = (equity - lastEquity) / initCapital;
-        if (now - lastJumpTime > 4000) {
-            if (eqChange > 0.05) { bgmAudio.currentTime = 29.5; showMsg("🚀 爽翻天！"); lastJumpTime = now; } 
-            else if (eqChange < -0.05) { bgmAudio.currentTime = 38.75; showMsg("💀 要被抬走了！"); lastJumpTime = now; }
-        }
-        lastEquity = equity;
+        const eqDelta = equity - lastEquity; const eqDeltaPct = Math.abs(eqDelta) / initCapital; let triggerMusic = "";
+        
+        if (lastEquity > initCapital * 1.1 && equity < initCapital) { triggerMusic = "hell"; showMsg("💀 暴富變破產！"); }
+        else if (lastEquity < initCapital * 0.9 && equity > initCapital) { triggerMusic = "heaven"; showMsg("🚀 奇蹟生還！"); }
+        else if (eqDeltaPct > 0.15) { if (eqDelta > 0) { triggerMusic = "heaven"; showMsg("🚀 一柱擎天！"); } else { triggerMusic = "hell"; showMsg("💀 核彈瀑布！"); } }
 
+        if (triggerMusic !== "" && now - lastJumpTime > 5000) {
+            if (triggerMusic === "heaven") bgmAudio.currentTime = 29.5; else bgmAudio.currentTime = 38.75; 
+            lastJumpTime = now;
+        }
+        
+        lastEquity = equity;
         if (equity <= 0) { draw(); updateUI(); playSound('liq'); endGame(true, equity); return; }
         if (currentStep >= TOTAL_STEPS + 10) { if (longPos > 0 || shortPos > 0) balance = equity; endGame(false, balance); }
         else { draw(); updateUI(); }
@@ -516,29 +480,52 @@
         document.getElementById('overlay').style.display = 'flex'; document.getElementById('alert-box').style.display = 'none';
         currentUserRoi = ((finalEquity - initCapital) / initCapital) * 100;
 
-        // 【保留】結算畫面 2 秒專屬收尾音效
         if (!isMuted) {
             bgmAudio.pause(); 
             if (currentUserRoi > 0) { bgmAudio.currentTime = 29.5; } else { bgmAudio.currentTime = 38.75; }
-            bgmAudio.play().catch(e => {});
-            setTimeout(() => { bgmAudio.pause(); }, 2000);
+            bgmAudio.play().catch(e => {}); setTimeout(() => { bgmAudio.pause(); }, 2000);
         }
 
-        const alpha = currentUserRoi - (((marketData[currentStep-1].close - marketData[9].open) / marketData[9].open) * 100 * leverage);
         let rank = "", sub = "", color = "";
-        if (isLiq || currentUserRoi <= -90) { rank = "RANK: F"; sub = `☠️ 槓桿拉滿，直接抬走！連渣都不剩，甚至倒欠 ${Math.abs(finalEquity).toFixed(2)} U。天台的風很大...`; color = "var(--down-color)"; } 
-        else if (currentUserRoi < 0) {
-            if (alpha > 20 && allowShort) { rank = "RANK: C+"; sub = "📉 大盤跌成狗，但你成功跑贏了市場！雖敗猶榮！"; color = "#ff9500"; }
-            else { rank = "RANK: D"; sub = "🧼 你的本金已變成主力的法拉利了。明天早起去打工吧..."; color = "var(--down-color)"; }
+        
+        if (tradeCount <= 1) {
+            rank = "RANK: E";
+            sub = "💤 觀望大師？一頓操作猛如虎，一看次數只有一。你把合約當作定存買嗎？連手續費都不夠付！";
+            color = "var(--text-dim)";
+        } else if (isLiq || currentUserRoi <= -90) { 
+            rank = "RANK: F"; 
+            sub = `☠️ 槓桿拉滿，直接抬走！連渣都不剩，甚至倒欠 ${Math.abs(finalEquity).toFixed(2)} U。天台的風很大...`; 
+            color = "var(--down-color)"; 
+        } else if (currentUserRoi < 0) {
+            if (currentUserRoi > -30 && tradeCount >= 5) { 
+                rank = "RANK: C+"; sub = "✂️ 瘋狂刷單結果還是虧！但至少你懂得及時停損，沒把底褲賠光，算你命大。"; color = "#ff9500"; 
+            } else { 
+                rank = "RANK: D"; sub = "🧼 你的本金已經變成主力車庫裡的法拉利了。乖乖去打工還債吧。"; color = "var(--down-color)"; 
+            }
         } else {
-            if (alpha < 0) { rank = "RANK: B-"; sub = "🐢 雖然賺了，但瞎忙一場，不如一開始就滿倉睡覺！"; color = "#34c759"; }
-            else if (alpha > 50) { rank = "RANK: SSS"; sub = "🔥 多空雙殺！華爾街明天就發聘書給你！"; color = "var(--accent)"; }
-            else { rank = "RANK: A"; sub = "📈 穩穩的幸福！成功擊敗大盤，晚餐加個大雞腿。"; color = "var(--up-color)"; }
+            if (currentUserRoi < 20 && tradeCount > 8) { 
+                rank = "RANK: B-"; sub = "🐢 瘋狂殺進殺出，結果只賺個便當錢？瞎折騰一場，根本是給交易所打工！"; color = "#34c759"; 
+            } else if (currentUserRoi >= 500) { 
+                rank = "RANK: SSS"; 
+                if (maxHoldingSteps >= 20) sub = "🔥 天選交易神！翻了五倍以上！死拿大師看準趨勢死抱不放，華爾街連夜搭專機來拜師！";
+                else sub = "🔥 天選交易神！翻了五倍以上！高頻神童精準踏在每個波段，主力直接被你玩破產！";
+                color = "var(--accent)"; 
+            } else if (currentUserRoi >= 300) {
+                rank = "RANK: SS"; sub = "🚀 無情收割機！暴賺三百趴！這根本不是在交易，你是在明目張膽地搶劫交易所！"; color = "#ff2d55";
+            } else if (currentUserRoi >= 100) {
+                rank = "RANK: S"; sub = "🎰 合約印鈔機！本金直接翻倍！你的滑鼠是金子做的吧？今晚直接包場慶祝！"; color = "#ff9500";
+            } else if (currentUserRoi >= 50) {
+                rank = "RANK: A+"; sub = "🥂 華爾街預備軍！獲利突破 50%！這個績效已經屌打一票死薪水了，繼續保持！"; color = "#32ade6";
+            } else { 
+                rank = "RANK: A"; sub = "📈 穩穩的幸福！懂得見好就收，今天晚餐可以幫自己加個大雞腿了。"; color = "var(--up-color)"; 
+            }
         }
+        
         document.getElementById('rank-title').innerText = rank; document.getElementById('rank-title').style.color = color;
         document.getElementById('rank-subtitle').innerText = sub; document.getElementById('rank-subtitle').style.color = color;
-        document.getElementById('res-alpha').innerText = (alpha > 0 ? "+" : "") + alpha.toFixed(2) + "%"; document.getElementById('res-alpha').style.color = alpha >= 0 ? "var(--up-color)" : "var(--down-color)";
-        document.getElementById('res-mkt').innerText = (currentUserRoi - alpha).toFixed(2) + "%";
+        
+        document.getElementById('res-trades').innerText = tradeCount + " 次";
+        document.getElementById('res-hold').innerText = maxHoldingSteps + " 根 K 線";
         document.getElementById('res-roi').innerText = (currentUserRoi > 0 ? "+" : "") + currentUserRoi.toFixed(2) + "%"; document.getElementById('res-roi').style.color = currentUserRoi >= 0 ? "var(--up-color)" : "var(--down-color)";
 
         const quotes = ["膽子大一點，100 倍槓桿別猶豫！", "才賺這點？高槓桿才是暴富真理！", "真正的勇士，帶著 50 倍槓桿睡覺。", "怕爆倉就不要玩合約，下次拉滿？", "別人恐懼我貪婪，別人小虧我破產。"];
