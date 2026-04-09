@@ -12,34 +12,37 @@
         * { box-sizing: border-box; -webkit-tap-highlight-color: transparent; outline: none; touch-action: manipulation; -webkit-user-select: none; user-select: none; }
         html, body { margin: 0; padding: 0; position: absolute; top: 0; left: 0; right: 0; bottom: 0; overflow: hidden; background-color: var(--bg-color); color: var(--text-main); font-family: "Courier New", Courier, monospace, sans-serif; display: flex; flex-direction: column; }
 
-        .dashboard { background: var(--card-bg); padding: 10px 15px; display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 8px 12px; border-bottom: 1px solid #333; flex-shrink: 0; align-items: center; }
+        .dashboard { background: var(--card-bg); padding: 10px 15px; display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 8px 12px; border-bottom: 1px solid #333; flex-shrink: 0; align-items: center; position: relative;}
         .stat-box { display: flex; flex-direction: column; }
         .label { font-size: 10px; color: var(--text-dim); font-weight: bold;}
-        .value { font-size: 14px; font-weight: bold; font-variant-numeric: tabular-nums; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
-        #mute-btn { background: #333; border: 1px solid #555; color: white; font-size: 14px; width: 36px; height: 36px; border-radius: 8px; display: flex; justify-content: center; align-items: center; cursor: pointer; margin-left: auto; justify-self: end;}
+        .value { font-size: 13px; font-weight: bold; font-variant-numeric: tabular-nums; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+        
+        .top-btn-group { position: absolute; right: 15px; top: 10px; display: flex; gap: 8px; }
+        .icon-btn { background: #333; border: 1px solid #555; color: white; font-size: 11px; height: 28px; padding: 0 8px; border-radius: 6px; display: flex; justify-content: center; align-items: center; cursor: pointer; font-weight: bold; }
+        #surrender-btn { background: rgba(255, 59, 48, 0.15); border-color: var(--down-color); color: #ff6b6b; }
 
         #chart-container { flex: 1 1 0%; position: relative; background: var(--bg-color); overflow: hidden; touch-action: none; }
         canvas { position: absolute; top: 0; left: 0; width: 100%; height: 100%; display: block; cursor: grab;}
         canvas:active { cursor: grabbing; }
-        #price-tag { position: absolute; right: 5px; background: rgba(255,255,255,0.1); padding: 2px 5px; font-size: 12px; border-radius: 4px; pointer-events: none; z-index: 2; }
+        #price-tag { position: absolute; right: 5px; background: rgba(255,255,255,0.1); padding: 2px 5px; font-size: 11px; border-radius: 4px; pointer-events: none; z-index: 2; }
         
-        #chart-controls { position: absolute; left: 10px; top: 10px; z-index: 5; display: flex; gap: 8px; }
-        .chart-btn { background: rgba(30,35,41,0.8); border: 1px solid #555; color: white; border-radius: 6px; width: 32px; height: 32px; font-size: 16px; display: flex; justify-content: center; align-items: center; cursor: pointer; backdrop-filter: blur(2px); }
-        .chart-btn-wide { width: auto; padding: 0 10px; font-size: 12px; font-weight: bold; display: none; background: rgba(240, 185, 11, 0.2); border-color: var(--accent); color: var(--accent);}
+        #chart-controls { position: absolute; left: 10px; top: 10px; z-index: 5; display: flex; gap: 6px; }
+        .chart-btn { background: rgba(30,35,41,0.8); border: 1px solid #555; color: white; border-radius: 6px; width: 28px; height: 28px; font-size: 14px; display: flex; justify-content: center; align-items: center; cursor: pointer; backdrop-filter: blur(2px); }
+        .chart-btn-wide { width: auto; padding: 0 8px; font-size: 11px; font-weight: bold; display: none; background: rgba(240, 185, 11, 0.2); border-color: var(--accent); color: var(--accent);}
 
         /* 警告與新聞彈窗 */
-        #alert-box { position: absolute; top: 15px; left: 50%; transform: translateX(-50%); background: rgba(255,59,48,0.9); padding: 8px 15px; border-radius: 20px; font-weight: bold; font-size: 12px; display: none; z-index: 10; border: 1px solid white; animation: pulse 1s infinite; white-space: nowrap; box-shadow: 0 4px 10px rgba(0,0,0,0.5); }
+        #alert-box { position: absolute; top: 15px; left: 50%; transform: translateX(-50%); background: rgba(255,59,48,0.9); padding: 6px 12px; border-radius: 20px; font-weight: bold; font-size: 11px; display: none; z-index: 10; border: 1px solid white; animation: pulse 1s infinite; white-space: nowrap; box-shadow: 0 4px 10px rgba(0,0,0,0.5); }
         @keyframes pulse { 0% { transform: translateX(-50%) scale(1); } 50% { transform: translateX(-50%) scale(1.05); } 100% { transform: translateX(-50%) scale(1); } }
         
-        @keyframes flashBtn { 0% { box-shadow: 0 0 0px var(--accent); } 50% { box-shadow: 0 0 15px var(--accent); } 100% { box-shadow: 0 0 0px var(--accent); } }
+        @keyframes flashBtn { 0% { box-shadow: 0 0 0px var(--accent); } 50% { box-shadow: 0 0 12px var(--accent); } 100% { box-shadow: 0 0 0px var(--accent); } }
         .btn-flash { animation: flashBtn 1.5s infinite !important; border: 1px solid var(--accent) !important; }
 
-        .controls { padding: 15px 15px 40px 15px; background: var(--card-bg); border-top: 1px solid #333; flex-shrink: 0; }
-        .slider-container { margin-bottom: 15px; display: flex; align-items: center; justify-content: space-between; }
+        .controls { padding: 12px 15px 30px 15px; background: var(--card-bg); border-top: 1px solid #333; flex-shrink: 0; }
+        .slider-container { margin-bottom: 12px; display: flex; align-items: center; justify-content: space-between; }
         input[type=range] { flex-grow: 1; margin: 0 15px; accent-color: var(--accent); }
-        .btn-group { display: grid; grid-template-columns: 1fr 1fr 1fr 1fr; gap: 8px; height: 50px; }
+        .btn-group { display: grid; grid-template-columns: 1fr 1fr 1fr 1fr; gap: 8px; height: 45px; }
         .btn-group.no-short { grid-template-columns: 1.5fr 1fr 1fr; }
-        button { border: none; border-radius: 8px; font-size: 15px; font-weight: bold; color: white; cursor: pointer; height: 100%; padding: 0 5px; transition: transform 0.1s;}
+        button { border: none; border-radius: 6px; font-size: 14px; font-weight: bold; color: white; cursor: pointer; height: 100%; padding: 0 5px; transition: transform 0.1s;}
         button:active { transform: scale(0.95); opacity: 0.8; }
         button:disabled { opacity: 0.2; filter: grayscale(1); cursor: not-allowed; transform: none; }
         .btn-long { background-color: var(--up-color); } 
@@ -50,35 +53,42 @@
         .fullscreen-overlay { position: absolute; top: 0; left: 0; width: 100%; height: 100%; background: var(--bg-color); display: flex; flex-direction: column; justify-content: flex-start; align-items: center; z-index: 100; text-align: center; padding: 40px 20px 20px 20px; overflow-y: auto; }
         #start-screen { background: rgba(15, 20, 26, 0.98); justify-content: center; padding-top: 20px;}
         
-        /* 首頁說明與動線重構 */
-        .intro-box { background: rgba(240, 185, 11, 0.1); border: 1px solid var(--accent); padding: 15px; border-radius: 8px; text-align: left; width: 100%; max-width: 350px; margin-bottom: 20px; }
-        .intro-box p { margin: 6px 0; font-size: 13px; color: #ddd; line-height: 1.5; }
+        /* 首頁說明與動線重構 - 縮小字體與平衡間距 */
+        #start-screen h1 { color: white; margin-bottom: 15px; font-size: 24px; text-shadow: 2px 2px #000; }
+        .intro-box { background: rgba(240, 185, 11, 0.1); border: 1px solid var(--accent); padding: 12px; border-radius: 8px; text-align: left; width: 100%; max-width: 320px; margin-bottom: 20px; }
+        .intro-box p { margin: 5px 0; font-size: 12px; color: #ddd; line-height: 1.4; }
         .intro-box span { color: var(--accent); font-weight: bold; }
 
-        .setup-group { width: 100%; max-width: 350px; margin-bottom: 20px; text-align: left; display: none; padding-top: 15px; border-top: 1px dashed #444;}
-        .setup-label { color: var(--accent); font-weight: bold; margin-bottom: 8px; display: block; font-size: 13px;}
-        .cap-btn-group { display: flex; gap: 8px; margin-bottom: 15px;}
-        .cap-btn { flex: 1; padding: 8px; background: #333; border: 2px solid transparent; border-radius: 6px; color: white; font-weight: bold; font-family: inherit; font-size: 12px; cursor: pointer;}
+        .setup-group { width: 100%; max-width: 320px; margin-bottom: 20px; text-align: left; display: none; padding-top: 15px; border-top: 1px dashed #444;}
+        .setup-label { color: var(--accent); font-weight: bold; margin-bottom: 6px; display: block; font-size: 12px;}
+        .cap-btn-group { display: flex; gap: 8px; margin-bottom: 12px;}
+        .cap-btn { flex: 1; padding: 8px; background: #333; border: 2px solid transparent; border-radius: 6px; color: white; font-weight: bold; font-family: inherit; font-size: 11px; cursor: pointer;}
         .cap-btn.active { border-color: var(--accent); background: #444; }
 
-        .toggle-container { display: flex; justify-content: space-between; align-items: center; background: #222; padding: 8px 12px; border-radius: 8px; margin-bottom: 15px; border: 1px solid #444;}
-        .toggle-label { font-size: 13px; font-weight: bold; color: white;}
-        .switch { position: relative; display: inline-block; width: 40px; height: 22px; }
+        .toggle-container { display: flex; justify-content: space-between; align-items: center; background: #222; padding: 8px 12px; border-radius: 6px; margin-bottom: 12px; border: 1px solid #444;}
+        .toggle-label { font-size: 12px; font-weight: bold; color: white;}
+        .switch { position: relative; display: inline-block; width: 36px; height: 20px; }
         .switch input { opacity: 0; width: 0; height: 0; }
-        .slider { position: absolute; cursor: pointer; top: 0; left: 0; right: 0; bottom: 0; background-color: #555; transition: .3s; border-radius: 22px; }
-        .slider:before { position: absolute; content: ""; height: 16px; width: 16px; left: 3px; bottom: 3px; background-color: white; transition: .3s; border-radius: 50%; }
+        .slider { position: absolute; cursor: pointer; top: 0; left: 0; right: 0; bottom: 0; background-color: #555; transition: .3s; border-radius: 20px; }
+        .slider:before { position: absolute; content: ""; height: 14px; width: 14px; left: 3px; bottom: 3px; background-color: white; transition: .3s; border-radius: 50%; }
         input:checked + .slider { background-color: var(--accent); }
-        input:checked + .slider:before { transform: translateX(18px); }
+        input:checked + .slider:before { transform: translateX(16px); }
 
-        #msg-box { position: absolute; top: 30%; left: 50%; transform: translateX(-50%); background: #ff3b30; padding: 10px 20px; border-radius: 20px; display: none; z-index: 50; font-weight: bold; white-space: nowrap; }
+        #msg-box { position: absolute; top: 30%; left: 50%; transform: translateX(-50%); background: #ff3b30; padding: 8px 16px; border-radius: 16px; display: none; z-index: 50; font-size: 12px; font-weight: bold; white-space: nowrap; }
 
         #lb-modal { position: absolute; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.95); display: none; flex-direction: column; justify-content: center; align-items: center; z-index: 200; padding: 20px; }
-        .lb-card { background: var(--card-bg); padding: 20px; border-radius: 10px; width: 100%; max-width: 350px; border: 1px solid var(--accent); }
-        .lb-row { display: grid; grid-template-columns: 1fr 2fr 1.5fr; padding: 10px 0; border-bottom: 1px solid #333; font-size: 14px; align-items: center; text-align: left;}
+        .lb-card { background: var(--card-bg); padding: 15px; border-radius: 10px; width: 100%; max-width: 320px; border: 1px solid var(--accent); }
+        .lb-row { display: grid; grid-template-columns: 1fr 2fr 1.5fr; padding: 8px 0; border-bottom: 1px solid #333; font-size: 12px; align-items: center; text-align: left;}
         .lb-row span:last-child { font-weight: bold; text-align: right; }
-        .lb-header { font-weight: bold; color: var(--text-dim); font-size: 12px; border-bottom: 2px solid #333; padding-bottom: 5px; }
+        .lb-header { font-weight: bold; color: var(--text-dim); font-size: 11px; border-bottom: 2px solid #333; padding-bottom: 5px; }
 
+        /* 結算文字與按鈕大小優化 */
         .devil-whisper { margin-top: 15px; font-size: 12px; color: var(--text-dim); font-style: italic; max-width: 280px; line-height: 1.5; }
+        #rank-title { font-size: 26px !important; }
+        #rank-subtitle { font-size: 12px !important; }
+        
+        /* 置中縮小的進入市場按鈕 */
+        #enter-market-btn { background: var(--up-color); color: white; width: 80%; max-width: 200px; padding: 12px; border-radius: 8px; font-size: 14px; margin: 15px auto 0 auto; display: block; box-shadow: 0 4px 10px rgba(0, 192, 135, 0.4); }
     </style>
 </head>
 <body>
@@ -90,7 +100,11 @@
         
         <div class="stat-box"><div class="label">總資產(U)</div><div id="total-equity" class="value" style="color: var(--accent);">0.00</div></div>
         <div class="stat-box"><div class="label">未實現盈虧(<span id="inGameLev">1</span>x)</div><div id="unrealized-pnl" class="value">--</div></div>
-        <div id="mute-btn" onclick="toggleMute()">🔊</div>
+        
+        <div class="top-btn-group">
+            <div class="icon-btn" id="surrender-btn" onclick="location.reload()">🏳️ 重來</div>
+            <div class="icon-btn" id="mute-btn" onclick="toggleMute()">🔊</div>
+        </div>
     </div>
 
     <div id="chart-container">
@@ -117,25 +131,25 @@
     </div>
 
     <div id="start-screen" class="fullscreen-overlay">
-        <h1 style="color: white; margin-bottom: 10px; font-size: 28px; text-shadow: 2px 2px #000;">單車摩托爭奪戰</h1>
+        <h1>單車摩托爭奪戰</h1>
         
         <div class="intro-box">
             <p>👉 選擇 <span>【簡易上手】</span>：<br>適合新手。系統鎖定 3倍槓桿、只能買漲，體驗最純粹的看盤快感。</p>
             <hr style="border:0; border-top:1px solid #444; margin: 8px 0;">
             <p>👉 選擇 <span>【進階合約】</span>：<br>適合老韭菜。百倍槓桿、多空雙殺、自訂本金，生死有命富貴在天。</p>
-            <p style="color:var(--down-color); margin-top: 6px; font-size: 11px;">🚨 提示：市場隨時會有「突發國際新聞」，將引發超劇烈波動！</p>
+            <p style="color:var(--down-color); margin-top: 6px; font-size: 10px;">🚨 提示：突發新聞可能是「主力騙局（利多出盡）」，請小心！</p>
         </div>
 
-        <div id="initial-buttons" style="display: flex; gap: 10px; width: 100%; max-width: 350px;">
-            <button onclick="easyStart()" style="background: #34c759; color: white; flex: 1; padding: 15px; border-radius: 8px; font-size: 16px; box-shadow: 0 4px 10px rgba(52, 199, 89, 0.4);">🌱 簡易上手</button>
-            <button onclick="showAdvancedSettings()" style="background: var(--card-bg); border: 1px solid var(--accent); color: var(--accent); flex: 1; padding: 15px; border-radius: 8px; font-size: 16px;">🔥 進階合約</button>
+        <div id="initial-buttons" style="display: flex; gap: 10px; width: 100%; max-width: 320px;">
+            <button onclick="easyStart()" style="background: #34c759; color: white; flex: 1; padding: 10px; border-radius: 8px; font-size: 14px; box-shadow: 0 4px 10px rgba(52, 199, 89, 0.4);">🌱 簡易上手</button>
+            <button onclick="showAdvancedSettings()" style="background: var(--card-bg); border: 1px solid var(--accent); color: var(--accent); flex: 1; padding: 10px; border-radius: 8px; font-size: 14px;">🔥 進階合約</button>
         </div>
 
         <div id="advanced-settings" class="setup-group">
             <span class="setup-label">你的名字 (榜單用)</span>
-            <div style="display: flex; gap: 8px; margin-bottom: 15px;">
-                <input type="text" id="playerName" style="flex-grow: 1; background:#333; border:1px solid #555; color:white; padding:8px; border-radius:6px; font-family:inherit;">
-                <button onclick="rollName()" style="background: var(--accent); color: black; border: none; border-radius: 6px; width: 40px; font-size: 18px; cursor: pointer;">🎲</button>
+            <div style="display: flex; gap: 8px; margin-bottom: 12px;">
+                <input type="text" id="playerName" style="flex-grow: 1; background:#333; border:1px solid #555; color:white; padding:6px 8px; border-radius:6px; font-family:inherit; font-size: 12px;">
+                <button onclick="rollName()" style="background: var(--accent); color: black; border: none; border-radius: 6px; width: 36px; font-size: 16px; cursor: pointer;">🎲</button>
             </div>
 
             <span class="setup-label">選擇交易對 (影響波動)</span>
@@ -162,7 +176,7 @@
             <input type="range" id="leverageSlider" min="1" max="100" step="1" value="10" oninput="updateLev(this.value)" style="width: 100%;">
             <div style="font-size:10px; color:#aaa; text-align:right;">(最高支援 100x 信仰)</div>
             
-            <button onclick="startGame(false)" style="background: var(--up-color); color: white; width: 100%; padding: 15px; border-radius: 8px; font-size: 16px; margin-top: 15px; box-shadow: 0 4px 10px rgba(0, 192, 135, 0.4);">進入市場</button>
+            <button id="enter-market-btn" onclick="startGame(false)">進入市場</button>
         </div>
     </div>
 
@@ -171,29 +185,27 @@
         <div id="rank-subtitle" style="font-size: 13px; margin-bottom: 15px; font-weight: bold; line-height: 1.4;"></div>
         
         <div style="background: var(--card-bg); padding: 15px; border-radius: 10px; text-align: left; width: 100%; max-width: 300px; margin-bottom: 15px;">
-            <p style="margin: 4px 0; font-size: 14px; color:var(--accent);">憑實力賺的差價: <span id="res-alpha" style="float: right;"></span></p>
-            <p style="margin: 4px 0; font-size: 14px;">無腦放著賺: <span id="res-mkt" style="float: right;"></span></p>
+            <p style="margin: 4px 0; font-size: 13px; color:var(--accent);">憑實力賺的差價: <span id="res-alpha" style="float: right;"></span></p>
+            <p style="margin: 4px 0; font-size: 13px;">無腦放著賺: <span id="res-mkt" style="float: right;"></span></p>
             <hr style="border-color: #333; margin: 8px 0;">
-            <p style="margin: 4px 0; font-size: 14px;">你的報酬率: <span id="res-roi" style="float: right;"></span></p>
+            <p style="margin: 4px 0; font-size: 13px;">你的報酬率: <span id="res-roi" style="float: right;"></span></p>
         </div>
 
         <div style="display: flex; gap: 10px; width: 100%; max-width: 300px; margin-bottom: 10px;">
-            <button id="save-lb-btn" onclick="saveToLeaderboard()" style="background: #ff9500; color: white; flex: 1; padding: 10px; border-radius: 8px; font-size: 14px; font-weight: bold;">💾 記在排行榜</button>
-            <button onclick="openLeaderboard()" style="background: #333; border: 1px solid var(--accent); color: white; flex: 1; padding: 10px; border-radius: 8px; font-size: 14px;">🏆 英雄榜</button>
+            <button id="save-lb-btn" onclick="saveToLeaderboard()" style="background: #ff9500; color: white; flex: 1; padding: 10px; border-radius: 8px; font-size: 13px; font-weight: bold;">💾 記在排行榜</button>
+            <button onclick="openLeaderboard()" style="background: #333; border: 1px solid var(--accent); color: white; flex: 1; padding: 10px; border-radius: 8px; font-size: 13px;">🏆 英雄榜</button>
         </div>
 
-        <button onclick="location.reload()" style="background: var(--accent); color: black; width: 100%; max-width: 300px; padding: 12px; border-radius: 8px; font-size: 16px; font-weight: bold;">再戰一場</button>
-        
-        <div id="devil-text" class="devil-whisper"></div>
+        <button onclick="location.reload()" style="background: var(--accent); color: black; width: 100%; max-width: 300px; padding: 10px; border-radius: 8px; font-size: 14px; font-weight: bold;">再戰一場</button>
     </div>
 
     <div id="lb-modal">
-        <h2 style="color: var(--accent); margin-bottom: 20px;">🏆 真人合約英雄榜</h2>
+        <h2 style="color: var(--accent); margin-bottom: 20px; font-size: 20px;">🏆 真人合約英雄榜</h2>
         <div class="lb-card">
             <div class="lb-row lb-header"><span>名次</span><span>玩家 (幣種)</span><span style="text-align: right;">報酬率</span></div>
             <div id="lb-content"></div>
         </div>
-        <button onclick="closeLeaderboard()" style="background: #444; color: white; margin-top: 25px; padding: 10px 30px; border-radius: 8px; border: none; font-size: 16px;">關閉</button>
+        <button onclick="closeLeaderboard()" style="background: #444; color: white; margin-top: 25px; padding: 8px 25px; border-radius: 8px; border: none; font-size: 14px;">關閉</button>
     </div>
 
 <script>
@@ -213,7 +225,7 @@
     let visibleCount = 30;
     let isDragging = false, startX = 0, startPan = 0;
     
-    window.newsAlerts = {}; // 黑天鵝新聞全域變數
+    window.newsAlerts = {}; 
 
     const TOTAL_STEPS = 60; 
     const ALERT_STEP = 55; 
@@ -225,15 +237,6 @@
         "高點接盤俠", "低谷割肉人", "全倉逐倉分不清", "資金費率小偷", "爆倉信件收集者", 
         "被強平的男人", "合約勝率0%", "永遠做反向", "看線圖發電", "K線圖畢卡索", 
         "信仰充值失敗", "抄底抄到地下室", "做多做空都被割", "只賺個便當錢", "一單虧掉一棟樓"
-    ];
-
-    const devilQuotes = [
-        "膽子大一點，100 倍槓桿別猶豫！贏了會所嫩模，輸了下海幹活。",
-        "才賺這點？高槓桿才是暴富的唯一真理，下次拉滿吧！",
-        "真正的勇士，都是帶著 50 倍槓桿睡覺的。",
-        "怕爆倉就不要玩合約，下次把槓桿拉到最右邊試試？",
-        "別人恐懼我貪婪，別人小虧我破產",
-        "人生沒有重來，但槓桿可以重開。100倍，懂？"
     ];
 
     function rollName() { document.getElementById('playerName').value = funnyNames[Math.floor(Math.random() * funnyNames.length)]; }
@@ -286,85 +289,94 @@
         else if (type === 'liq') { osc.type = 'sawtooth'; osc.frequency.setValueAtTime(100, now); g.gain.setValueAtTime(0.15, now); osc.start(); osc.stop(now + 0.5); }
     }
 
-    // 全新的不規則市場劇本生成器 + 新聞斷層打擊
-    function generateFibData() {
+    function generateMarketData() {
         window.newsAlerts = {}; 
         let data = [];
         const isBTC = coinName === 'BTC';
         const basePrice = isBTC ? 50000 + Math.random()*20000 : 0.1 + Math.random()*0.3; 
-        const volatility = isBTC ? (0.1 + Math.random()*0.2) : (0.3 + Math.random()*0.5); 
-        
-        // 黑天鵝事件設定
-        let hasNews = Math.random() > 0.3; // 70% 出現新聞
-        let execIndex = -1;
-        let newsImpact = 0;
-        if (hasNews) {
-            let alertIndex = 15 + Math.floor(Math.random() * 20); // 第15~34根觸發警告
-            execIndex = alertIndex + 1 + Math.floor(Math.random() * 3); // 警告後 1~3根執行
-            let isNewsBullish = Math.random() > 0.5;
-            newsImpact = (0.10 + Math.random() * 0.15) * (isNewsBullish ? 1 : -1); // 10~25% 斷層跳空
-            if (!isBTC) newsImpact *= 1.5; // DOGE 振幅更大
-            
-            const bullNews = ["突發：交戰國簽訂停戰協議！", "突發：聯準會緊急降息兩碼！", "突發：馬斯克發推力挺！", "突發：某大國列為法定貨幣！"];
-            const bearNews = ["突發：川普向伊朗宣戰！恐慌蔓延！", "突發：聯準會意外升息！", "突發：最大交易所遭駭客攻擊！", "突發：巨鯨大戶 10 萬枚砸盤！"];
-            window.newsAlerts[alertIndex] = isNewsBullish ? bullNews[Math.floor(Math.random()*bullNews.length)] : bearNews[Math.floor(Math.random()*bearNews.length)];
+        const vol = isBTC ? 0.008 : 0.025; 
+        const drift = (Math.random() - 0.5) * 0.002; 
+
+        let returns = new Array(120).fill(0);
+
+        for(let i=0; i<120; i++) {
+            returns[i] = drift + (Math.random() - 0.5) * vol;
         }
 
-        // 8 種不規則劇本
-        const scenarios = [
-            [0, 0.4, 0.3, 0.5, 0.4, 1.0],   // 盤整向上
-            [0, -0.4, -0.3, -0.5, -0.4, -1.0], // 盤整向下
-            [0, 0.2, 0.1, 0.9, -0.6, -1.0], // 誘多假突破 (畫門)
-            [0, -0.2, -0.1, -0.9, 0.6, 1.0], // 誘空假跌破 (V轉)
-            [0, 0.8, 1.0, -0.2, -0.8, -1.0], // 暴漲後A轉倒貨
-            [0, -0.8, -1.0, 0.2, 0.8, 1.0],  // 暴跌後V轉軋空
-            [0, 0.3, -0.1, 0.5, 0.2, 0.8],   // 震盪洗盤向上
-            [0, -0.3, 0.1, -0.5, -0.2, -0.8] // 震盪洗盤向下
-        ];
-        let pattern = scenarios[Math.floor(Math.random() * scenarios.length)];
-        
-        let multiplier = basePrice * volatility;
-        let pivots = pattern.map(p => basePrice + p * multiplier);
+        let numPatterns = 1 + Math.floor(Math.random() * 2);
+        for(let p=0; p<numPatterns; p++) {
+            let startIdx = 10 + Math.floor(Math.random() * 40); 
+            let type = Math.floor(Math.random() * 4); 
+            let intensity = vol * (3 + Math.random()*3); 
 
-        // 隨機分配每段長度 (避開固定 20,15,30...)
-        let steps = [];
-        let remaining = 100;
-        for(let i=0; i<4; i++) {
-            let s = 10 + Math.floor(Math.random() * 15);
-            steps.push(s);
-            remaining -= s;
-        }
-        steps.push(remaining); 
-
-        let prevClose = basePrice;
-        let cumulativeOffset = 0; 
-        let globalIndex = 0;
-
-        for(let w = 0; w < 5; w++) {
-            let start = pivots[w], end = pivots[w+1], waveDiff = end - start, stepCount = steps[w];
-            for(let i = 0; i < stepCount; i++) {
-                let progress = (i+1)/stepCount;
-                let easedProgress = (1 - Math.cos(progress * Math.PI)) / 2; 
-                
-                // 觸發黑天鵝斷層
-                if (globalIndex === execIndex) {
-                    cumulativeOffset += prevClose * newsImpact;
-                }
-
-                let target = start + waveDiff * easedProgress + cumulativeOffset;
-                let open = prevClose;
-                let noise = Math.abs(waveDiff) * 0.3 * (Math.random() - 0.5);
-                let close = Math.max(0.00001, target + noise); 
-                
-                let wickFactor = Math.abs(waveDiff) * 0.15 * Math.random();
-                let high = Math.max(open, close) + wickFactor;
-                let low = Math.min(open, close) - wickFactor;
-                
-                data.push({open, close, high, low});
-                prevClose = close;
-                globalIndex++;
+            if(type === 0) { 
+                returns[startIdx] = intensity; returns[startIdx+1] = intensity;
+                returns[startIdx+2] = -intensity; returns[startIdx+3] = -intensity;
+            } else if(type === 1) { 
+                returns[startIdx] = -intensity; returns[startIdx+1] = -intensity;
+                returns[startIdx+2] = intensity; returns[startIdx+3] = intensity;
+            } else if(type === 2) { 
+                for(let j=0; j<5; j++) returns[startIdx+j] = (Math.random()-0.5)*vol*0.5; 
+                returns[startIdx+5] = intensity * 1.5; 
+            } else if(type === 3) { 
+                for(let j=0; j<5; j++) returns[startIdx+j] = (Math.random()-0.5)*vol*0.5;
+                returns[startIdx+5] = -intensity * 1.5;
             }
         }
+
+        let hasNews = Math.random() > 0.3; 
+        let execIndex = -1;
+        if(hasNews) {
+            let alertIndex = 15 + Math.floor(Math.random() * 20); 
+            execIndex = alertIndex + 1 + Math.floor(Math.random() * 3); 
+            let isBullNews = Math.random() > 0.5;
+            let isFakeout = Math.random() > 0.4; 
+
+            const bullNews = ["突發：交戰國簽訂停戰協議！", "突發：聯準會緊急降息兩碼！", "突發：馬斯克發推力挺！"];
+            const bearNews = ["突發：川普向伊朗宣戰！恐慌蔓延！", "突發：聯準會意外升息！", "突發：最大交易所遭駭客攻擊！"];
+            window.newsAlerts[alertIndex] = isBullNews ? bullNews[Math.floor(Math.random()*bullNews.length)] : bearNews[Math.floor(Math.random()*bearNews.length)];
+
+            let newsImpact = (isBTC ? 0.05 : 0.15) + Math.random() * 0.1; 
+
+            if(isBullNews) {
+                if(isFakeout) { 
+                    returns[execIndex] = newsImpact * 0.5; 
+                    returns[execIndex+1] = -newsImpact * 1.2; 
+                    returns[execIndex+2] = -newsImpact * 0.8;
+                } else { 
+                    returns[execIndex] = newsImpact;
+                    returns[execIndex+1] = newsImpact * 0.5;
+                }
+            } else {
+                if(isFakeout) { 
+                    returns[execIndex] = -newsImpact * 0.5; 
+                    returns[execIndex+1] = newsImpact * 1.2; 
+                    returns[execIndex+2] = newsImpact * 0.8;
+                } else { 
+                    returns[execIndex] = -newsImpact;
+                    returns[execIndex+1] = -newsImpact * 0.5;
+                }
+            }
+        }
+
+        let prevClose = basePrice;
+        for(let i=0; i<120; i++) {
+            let open = prevClose;
+            let jump = Math.random() > 0.95 ? (Math.random()-0.5)*vol : 0;
+            open += open * jump;
+
+            let targetReturn = returns[i];
+            let close = open * (1 + targetReturn);
+            close = Math.max(0.00001, close); 
+
+            let wickFactor = Math.abs(open * vol * Math.random() * 2);
+            let high = Math.max(open, close) + wickFactor;
+            let low = Math.max(0.00001, Math.min(open, close) - wickFactor);
+
+            data.push({open, close, high, low});
+            prevClose = close;
+        }
+
         return data;
     }
 
@@ -385,12 +397,11 @@
         
         if (isEasyMode) { document.getElementById('btn-next').classList.add('btn-flash'); }
         
-        marketData = generateFibData();
+        marketData = generateMarketData(); 
         document.getElementById('start-screen').style.display = 'none';
         resizeCanvas(); updateUI(); draw();
     }
 
-    /* ---------------- 圖表拖曳與縮放邏輯 ---------------- */
     const canvas = document.getElementById('mainChart'), ctx = canvas.getContext('2d');
     
     function resizeCanvas() { const rect = canvas.parentElement.getBoundingClientRect(); canvas.width = rect.width; canvas.height = rect.height; }
@@ -521,7 +532,6 @@
         const equity = balance + longMargin + lPnl + shortMargin + sPnl;
         const now = Date.now();
 
-        // 觸發黑天鵝新聞 UI
         if (window.newsAlerts[currentStep]) {
             const abox = document.getElementById('alert-box');
             abox.innerText = "📰 " + window.newsAlerts[currentStep];
@@ -596,15 +606,36 @@
         const alpha = currentUserRoi - marketRoi;
 
         let rank = "", sub = "", color = "";
+        
+        // 依照新設定的 6 種結局邏輯
         if (isLiq || currentUserRoi <= -90) { 
-            rank = "RANK: F"; sub = `☠️ 穿倉！倒欠莊家 ${Math.abs(finalEquity).toFixed(2)} U`; color = "var(--down-color)"; 
+            rank = "RANK: F"; 
+            sub = `☠️ 槓桿拉滿，直接抬走！連渣都不剩，甚至還倒欠莊家 ${Math.abs(finalEquity).toFixed(2)} U。天台的風很大，記得穿件厚外套。`; 
+            color = "var(--down-color)"; 
         } else if (currentUserRoi < 0) { 
-            if (alpha > 20 && allowShort) { rank = "RANK: C+"; sub = "📉 雖然虧了，但你做空跑贏了大盤！"; color = "#ff9500"; }
-            else { rank = "RANK: D"; sub = "🧼 牢底坐穿，韭菜就是你"; color = "var(--down-color)"; }
+            if (alpha > 20) { 
+                rank = "RANK: C+"; 
+                sub = "📉 大盤跌成狗，雖然你也虧了，但你成功跑贏了市場！在幣圈，少虧就是賺，雖敗猶榮！"; 
+                color = "#ff9500"; 
+            } else { 
+                rank = "RANK: D"; 
+                sub = "🧼 你的本金已經變成主力車庫裡的法拉利了。洗洗睡吧，明天還要早起去火鍋店跟燒烤店打工端盤子，空檔還得狂做資料輸入來還債呢。"; 
+                color = "var(--down-color)"; 
+            }
         } else {
-            if (alpha < -20) { rank = "RANK: B-"; sub = "🐢 賺錢但瞎忙一場，不如DCA"; color = "#34c759"; }
-            else if (alpha > 50) { rank = "RANK: SSS"; sub = "🔥 交易大師！完美的波段收割！"; color = "var(--accent)"; }
-            else { rank = "RANK: A"; sub = "📈 穩健操盤手，賭性不夠強烈"; color = "var(--up-color)"; }
+            if (alpha < 0) { 
+                rank = "RANK: B-"; 
+                sub = "🐢 雖然賺了，但一波操作猛如虎，一看收益二百五。瞎忙一場，不如一開始就滿倉去睡覺！"; 
+                color = "#34c759"; 
+            } else if (alpha > 50) { 
+                rank = "RANK: SSS"; 
+                sub = "🔥 多空雙殺！主力都快被你玩破產了，華爾街明天就發聘書給你！"; 
+                color = "var(--accent)"; 
+            } else { 
+                rank = "RANK: A"; 
+                sub = "📈 穩穩的幸福！成功擊敗大盤，今天晚餐可以幫自己加個大雞腿了。"; 
+                color = "var(--up-color)"; 
+            }
         }
 
         document.getElementById('rank-title').innerText = rank;
@@ -617,9 +648,6 @@
         document.getElementById('res-mkt').innerText = (marketRoi > 0 ? "+" : "") + marketRoi.toFixed(2) + "%";
         document.getElementById('res-roi').innerText = (currentUserRoi > 0 ? "+" : "") + currentUserRoi.toFixed(2) + "%";
         document.getElementById('res-roi').style.color = currentUserRoi >= 0 ? "var(--up-color)" : "var(--down-color)";
-
-        const devilQuote = devilQuotes[Math.floor(Math.random() * devilQuotes.length)];
-        document.getElementById('devil-text').innerText = `"${devilQuote}"`;
 
         const saveBtn = document.getElementById('save-lb-btn');
         saveBtn.innerText = "💾 記在排行榜";
