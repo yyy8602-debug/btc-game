@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>韭菜生存戰：合約模擬器</title>
+    <title>單車摩托爭奪戰</title>
     <style>
         :root {
             --up-color: #00c087; --down-color: #ff3b30; --bg-color: #0f141a;
@@ -18,21 +18,30 @@
         .value { font-size: 14px; font-weight: bold; font-variant-numeric: tabular-nums; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
         #mute-btn { background: #333; border: 1px solid #555; color: white; font-size: 14px; width: 36px; height: 36px; border-radius: 8px; display: flex; justify-content: center; align-items: center; cursor: pointer; margin-left: auto; justify-self: end;}
 
-        #chart-container { flex: 1 1 0%; position: relative; background: var(--bg-color); overflow: hidden; }
-        canvas { position: absolute; top: 0; left: 0; width: 100%; height: 100%; display: block; }
+        #chart-container { flex: 1 1 0%; position: relative; background: var(--bg-color); overflow: hidden; touch-action: none; }
+        canvas { position: absolute; top: 0; left: 0; width: 100%; height: 100%; display: block; cursor: grab;}
+        canvas:active { cursor: grabbing; }
         #price-tag { position: absolute; right: 5px; background: rgba(255,255,255,0.1); padding: 2px 5px; font-size: 12px; border-radius: 4px; pointer-events: none; z-index: 2; }
         
-        #alert-box { position: absolute; top: 10px; left: 50%; transform: translateX(-50%); background: rgba(255,59,48,0.9); padding: 5px 15px; border-radius: 20px; font-weight: bold; font-size: 12px; display: none; z-index: 10; border: 1px solid white; animation: pulse 1s infinite; }
-        @keyframes pulse { 0% { transform: translateX(-50%) scale(1); } 50% { transform: translateX(-50%) scale(1.1); } 100% { transform: translateX(-50%) scale(1); } }
+        #chart-controls { position: absolute; left: 10px; top: 10px; z-index: 5; display: flex; gap: 8px; }
+        .chart-btn { background: rgba(30,35,41,0.8); border: 1px solid #555; color: white; border-radius: 6px; width: 32px; height: 32px; font-size: 16px; display: flex; justify-content: center; align-items: center; cursor: pointer; backdrop-filter: blur(2px); }
+        .chart-btn-wide { width: auto; padding: 0 10px; font-size: 12px; font-weight: bold; display: none; background: rgba(240, 185, 11, 0.2); border-color: var(--accent); color: var(--accent);}
+
+        /* 警告與新聞彈窗 */
+        #alert-box { position: absolute; top: 15px; left: 50%; transform: translateX(-50%); background: rgba(255,59,48,0.9); padding: 8px 15px; border-radius: 20px; font-weight: bold; font-size: 12px; display: none; z-index: 10; border: 1px solid white; animation: pulse 1s infinite; white-space: nowrap; box-shadow: 0 4px 10px rgba(0,0,0,0.5); }
+        @keyframes pulse { 0% { transform: translateX(-50%) scale(1); } 50% { transform: translateX(-50%) scale(1.05); } 100% { transform: translateX(-50%) scale(1); } }
+        
+        @keyframes flashBtn { 0% { box-shadow: 0 0 0px var(--accent); } 50% { box-shadow: 0 0 15px var(--accent); } 100% { box-shadow: 0 0 0px var(--accent); } }
+        .btn-flash { animation: flashBtn 1.5s infinite !important; border: 1px solid var(--accent) !important; }
 
         .controls { padding: 15px 15px 40px 15px; background: var(--card-bg); border-top: 1px solid #333; flex-shrink: 0; }
         .slider-container { margin-bottom: 15px; display: flex; align-items: center; justify-content: space-between; }
         input[type=range] { flex-grow: 1; margin: 0 15px; accent-color: var(--accent); }
         .btn-group { display: grid; grid-template-columns: 1fr 1fr 1fr 1fr; gap: 8px; height: 50px; }
         .btn-group.no-short { grid-template-columns: 1.5fr 1fr 1fr; }
-        button { border: none; border-radius: 8px; font-size: 16px; font-weight: bold; color: white; cursor: pointer; height: 100%; padding: 0 5px;}
+        button { border: none; border-radius: 8px; font-size: 15px; font-weight: bold; color: white; cursor: pointer; height: 100%; padding: 0 5px; transition: transform 0.1s;}
         button:active { transform: scale(0.95); opacity: 0.8; }
-        button:disabled { opacity: 0.2; filter: grayscale(1); cursor: not-allowed; }
+        button:disabled { opacity: 0.2; filter: grayscale(1); cursor: not-allowed; transform: none; }
         .btn-long { background-color: var(--up-color); } 
         .btn-short { background-color: var(--down-color); } 
         .btn-closeAll { background-color: #d97706; }
@@ -41,18 +50,19 @@
         .fullscreen-overlay { position: absolute; top: 0; left: 0; width: 100%; height: 100%; background: var(--bg-color); display: flex; flex-direction: column; justify-content: flex-start; align-items: center; z-index: 100; text-align: center; padding: 40px 20px 20px 20px; overflow-y: auto; }
         #start-screen { background: rgba(15, 20, 26, 0.98); justify-content: center; padding-top: 20px;}
         
-        .intro-box { background: rgba(240, 185, 11, 0.1); border: 1px solid var(--accent); padding: 12px; border-radius: 8px; text-align: left; width: 100%; max-width: 350px; margin-bottom: 15px; }
-        .intro-box p { margin: 4px 0; font-size: 12px; color: #ddd; line-height: 1.4; }
+        /* 首頁說明與動線重構 */
+        .intro-box { background: rgba(240, 185, 11, 0.1); border: 1px solid var(--accent); padding: 15px; border-radius: 8px; text-align: left; width: 100%; max-width: 350px; margin-bottom: 20px; }
+        .intro-box p { margin: 6px 0; font-size: 13px; color: #ddd; line-height: 1.5; }
         .intro-box span { color: var(--accent); font-weight: bold; }
 
-        .setup-group { width: 100%; max-width: 350px; margin-bottom: 20px; text-align: left;}
+        .setup-group { width: 100%; max-width: 350px; margin-bottom: 20px; text-align: left; display: none; padding-top: 15px; border-top: 1px dashed #444;}
         .setup-label { color: var(--accent); font-weight: bold; margin-bottom: 8px; display: block; font-size: 13px;}
         .cap-btn-group { display: flex; gap: 8px; margin-bottom: 15px;}
         .cap-btn { flex: 1; padding: 8px; background: #333; border: 2px solid transparent; border-radius: 6px; color: white; font-weight: bold; font-family: inherit; font-size: 12px; cursor: pointer;}
         .cap-btn.active { border-color: var(--accent); background: #444; }
 
         .toggle-container { display: flex; justify-content: space-between; align-items: center; background: #222; padding: 8px 12px; border-radius: 8px; margin-bottom: 15px; border: 1px solid #444;}
-        .toggle-label { font-size: 13px; font-weight: bold; }
+        .toggle-label { font-size: 13px; font-weight: bold; color: white;}
         .switch { position: relative; display: inline-block; width: 40px; height: 22px; }
         .switch input { opacity: 0; width: 0; height: 0; }
         .slider { position: absolute; cursor: pointer; top: 0; left: 0; right: 0; bottom: 0; background-color: #555; transition: .3s; border-radius: 22px; }
@@ -84,6 +94,12 @@
     </div>
 
     <div id="chart-container">
+        <div id="chart-controls">
+            <div class="chart-btn" onclick="zoomChart(-5)">➕</div>
+            <div class="chart-btn" onclick="zoomChart(5)">➖</div>
+            <div class="chart-btn chart-btn-wide" id="reset-view-btn" onclick="resetView()">📍 最新</div>
+        </div>
+
         <div id="alert-box">⚠️ 倒數 15 根 K 線！</div>
         <div id="msg-box"></div>
         <div id="price-tag"></div>
@@ -96,21 +112,26 @@
             <button class="btn-long" onclick="action('long')">做多</button>
             <button class="btn-short" id="btn-short-action" onclick="action('short')">做空</button>
             <button class="btn-closeAll" id="sellBtn" onclick="action('closeAll')" disabled>全平</button>
-            <button class="btn-wait" onclick="action('wait')">觀望</button>
+            <button class="btn-wait" id="btn-next" onclick="action('wait')">下一根K線</button>
         </div>
     </div>
 
     <div id="start-screen" class="fullscreen-overlay">
-        <h1 style="color: white; margin-bottom: 10px; font-size: 24px;">韭菜生存戰</h1>
+        <h1 style="color: white; margin-bottom: 10px; font-size: 28px; text-shadow: 2px 2px #000;">單車摩托爭奪戰</h1>
         
         <div class="intro-box">
-            <p>1. 選擇投入資金比例，預測 K 線漲跌。</p>
-            <p>2. 覺得會漲按<span>「做多」</span>，會跌按<span>「做空」</span>。</p>
-            <p>3. <span>「槓桿」</span>能放大獲利，但也容易爆倉歸零！</p>
-	    <p>4. 按下<span>「觀望」</span>會顯示下一條K線</p>
+            <p>👉 選擇 <span>【簡易上手】</span>：<br>適合新手。系統鎖定 3倍槓桿、只能買漲，體驗最純粹的看盤快感。</p>
+            <hr style="border:0; border-top:1px solid #444; margin: 8px 0;">
+            <p>👉 選擇 <span>【進階合約】</span>：<br>適合老韭菜。百倍槓桿、多空雙殺、自訂本金，生死有命富貴在天。</p>
+            <p style="color:var(--down-color); margin-top: 6px; font-size: 11px;">🚨 提示：市場隨時會有「突發國際新聞」，將引發超劇烈波動！</p>
         </div>
 
-        <div class="setup-group">
+        <div id="initial-buttons" style="display: flex; gap: 10px; width: 100%; max-width: 350px;">
+            <button onclick="easyStart()" style="background: #34c759; color: white; flex: 1; padding: 15px; border-radius: 8px; font-size: 16px; box-shadow: 0 4px 10px rgba(52, 199, 89, 0.4);">🌱 簡易上手</button>
+            <button onclick="showAdvancedSettings()" style="background: var(--card-bg); border: 1px solid var(--accent); color: var(--accent); flex: 1; padding: 15px; border-radius: 8px; font-size: 16px;">🔥 進階合約</button>
+        </div>
+
+        <div id="advanced-settings" class="setup-group">
             <span class="setup-label">你的名字 (榜單用)</span>
             <div style="display: flex; gap: 8px; margin-bottom: 15px;">
                 <input type="text" id="playerName" style="flex-grow: 1; background:#333; border:1px solid #555; color:white; padding:8px; border-radius:6px; font-family:inherit;">
@@ -119,8 +140,8 @@
 
             <span class="setup-label">選擇交易對 (影響波動)</span>
             <div class="cap-btn-group">
-                <button class="cap-btn active" id="coin-btc" onclick="selectCoin('BTC')">BTC (大餅-穩健)</button>
-                <button class="cap-btn" id="coin-doge" onclick="selectCoin('DOGE')">DOGE (瘋狗-暴走)</button>
+                <button class="cap-btn active" id="coin-btc" onclick="selectCoin('BTC')">BTC (穩健)</button>
+                <button class="cap-btn" id="coin-doge" onclick="selectCoin('DOGE')">DOGE (瘋狗)</button>
             </div>
 
             <span class="setup-label">初始資金 (USDT)</span>
@@ -140,11 +161,8 @@
             <span class="setup-label">槓桿倍數 (<span id="levDisplay">10</span>x)</span>
             <input type="range" id="leverageSlider" min="1" max="100" step="1" value="10" oninput="updateLev(this.value)" style="width: 100%;">
             <div style="font-size:10px; color:#aaa; text-align:right;">(最高支援 100x 信仰)</div>
-        </div>
-        
-        <div style="display: flex; gap: 10px; width: 100%; max-width: 350px;">
-            <button onclick="easyStart()" style="background: #34c759; color: white; flex: 1; padding: 12px; border-radius: 8px; font-size: 14px;">簡易上手<br><span style="font-size:10px; font-weight:normal;">(只做多, 3x)</span></button>
-            <button onclick="startGame()" style="background: var(--up-color); color: white; flex: 1.5; padding: 12px; border-radius: 8px; font-size: 18px;">開始交易</button>
+            
+            <button onclick="startGame(false)" style="background: var(--up-color); color: white; width: 100%; padding: 15px; border-radius: 8px; font-size: 16px; margin-top: 15px; box-shadow: 0 4px 10px rgba(0, 192, 135, 0.4);">進入市場</button>
         </div>
     </div>
 
@@ -153,10 +171,10 @@
         <div id="rank-subtitle" style="font-size: 13px; margin-bottom: 15px; font-weight: bold; line-height: 1.4;"></div>
         
         <div style="background: var(--card-bg); padding: 15px; border-radius: 10px; text-align: left; width: 100%; max-width: 300px; margin-bottom: 15px;">
-            <p style="margin: 4px 0; font-size: 14px;">你的報酬率: <span id="res-roi" style="float: right;"></span></p>
+            <p style="margin: 4px 0; font-size: 14px; color:var(--accent);">憑實力賺的差價: <span id="res-alpha" style="float: right;"></span></p>
             <p style="margin: 4px 0; font-size: 14px;">無腦放著賺: <span id="res-mkt" style="float: right;"></span></p>
             <hr style="border-color: #333; margin: 8px 0;">
-            <p style="margin: 4px 0; font-size: 14px; color:var(--accent);">憑實力賺的差價: <span id="res-alpha" style="float: right;"></span></p>
+            <p style="margin: 4px 0; font-size: 14px;">你的報酬率: <span id="res-roi" style="float: right;"></span></p>
         </div>
 
         <div style="display: flex; gap: 10px; width: 100%; max-width: 300px; margin-bottom: 10px;">
@@ -188,9 +206,15 @@
     let longPos = 0, longMargin = 0, longCost = 0;
     let shortPos = 0, shortMargin = 0, shortCost = 0;
     let coinName = "BTC", playerName = "";
-    let allowShort = true;
-    let currentUserRoi = 0; // 用來暫存當局的報酬率給排行榜用
+    let allowShort = true, isEasyMode = false, hasLostInEasy = false;
+    let currentUserRoi = 0; 
     
+    let panOffset = 0; 
+    let visibleCount = 30;
+    let isDragging = false, startX = 0, startPan = 0;
+    
+    window.newsAlerts = {}; // 黑天鵝新聞全域變數
+
     const TOTAL_STEPS = 60; 
     const ALERT_STEP = 55; 
 
@@ -208,11 +232,15 @@
         "才賺這點？高槓桿才是暴富的唯一真理，下次拉滿吧！",
         "真正的勇士，都是帶著 50 倍槓桿睡覺的。",
         "怕爆倉就不要玩合約，下次把槓桿拉到最右邊試試？",
-	"別人恐懼我貪婪，別人小虧我破產",
+        "別人恐懼我貪婪，別人小虧我破產",
         "人生沒有重來，但槓桿可以重開。100倍，懂？"
     ];
 
     function rollName() { document.getElementById('playerName').value = funnyNames[Math.floor(Math.random() * funnyNames.length)]; }
+    function showAdvancedSettings() { 
+        document.getElementById('initial-buttons').style.display = 'none'; 
+        document.getElementById('advanced-settings').style.display = 'block'; 
+    }
 
     let realLeaderboard = JSON.parse(localStorage.getItem('realCryptoLb')) || [];
 
@@ -240,11 +268,12 @@
     }
 
     function easyStart() {
+        isEasyMode = true;
         document.getElementById('allowShortToggle').checked = false;
         toggleShortMode(false);
         document.getElementById('leverageSlider').value = 3;
         updateLev(3);
-        startGame();
+        startGame(true);
     }
 
     function playSound(type) {
@@ -257,45 +286,90 @@
         else if (type === 'liq') { osc.type = 'sawtooth'; osc.frequency.setValueAtTime(100, now); g.gain.setValueAtTime(0.15, now); osc.start(); osc.stop(now + 0.5); }
     }
 
+    // 全新的不規則市場劇本生成器 + 新聞斷層打擊
     function generateFibData() {
+        window.newsAlerts = {}; 
         let data = [];
-        const basePrice = coinName === 'BTC' ? 50000 + Math.random()*20000 : 0.1 + Math.random()*0.3; 
-        const isBull = Math.random() > 0.4; 
-        const dir = isBull ? 1 : -1;
-        const volatility = coinName === 'BTC' ? (0.1 + Math.random()*0.3) : (0.4 + Math.random()*0.8); 
+        const isBTC = coinName === 'BTC';
+        const basePrice = isBTC ? 50000 + Math.random()*20000 : 0.1 + Math.random()*0.3; 
+        const volatility = isBTC ? (0.1 + Math.random()*0.2) : (0.3 + Math.random()*0.5); 
         
-        const w0 = basePrice;
-        const w1 = w0 + (w0 * volatility * 0.4) * dir; 
-        const w2 = w1 - (w1 - w0) * (Math.random() > 0.5 ? 0.618 : 0.382); 
-        const w3 = w2 + (w1 - w0) * 1.618; 
-        const w4 = w3 - (w3 - w2) * 0.382; 
-        const w5 = w4 + (w3 - w2) * (Math.random() > 0.5 ? 1.0 : 1.272); 
+        // 黑天鵝事件設定
+        let hasNews = Math.random() > 0.3; // 70% 出現新聞
+        let execIndex = -1;
+        let newsImpact = 0;
+        if (hasNews) {
+            let alertIndex = 15 + Math.floor(Math.random() * 20); // 第15~34根觸發警告
+            execIndex = alertIndex + 1 + Math.floor(Math.random() * 3); // 警告後 1~3根執行
+            let isNewsBullish = Math.random() > 0.5;
+            newsImpact = (0.10 + Math.random() * 0.15) * (isNewsBullish ? 1 : -1); // 10~25% 斷層跳空
+            if (!isBTC) newsImpact *= 1.5; // DOGE 振幅更大
+            
+            const bullNews = ["突發：交戰國簽訂停戰協議！", "突發：聯準會緊急降息兩碼！", "突發：馬斯克發推力挺！", "突發：某大國列為法定貨幣！"];
+            const bearNews = ["突發：川普向伊朗宣戰！恐慌蔓延！", "突發：聯準會意外升息！", "突發：最大交易所遭駭客攻擊！", "突發：巨鯨大戶 10 萬枚砸盤！"];
+            window.newsAlerts[alertIndex] = isNewsBullish ? bullNews[Math.floor(Math.random()*bullNews.length)] : bearNews[Math.floor(Math.random()*bearNews.length)];
+        }
+
+        // 8 種不規則劇本
+        const scenarios = [
+            [0, 0.4, 0.3, 0.5, 0.4, 1.0],   // 盤整向上
+            [0, -0.4, -0.3, -0.5, -0.4, -1.0], // 盤整向下
+            [0, 0.2, 0.1, 0.9, -0.6, -1.0], // 誘多假突破 (畫門)
+            [0, -0.2, -0.1, -0.9, 0.6, 1.0], // 誘空假跌破 (V轉)
+            [0, 0.8, 1.0, -0.2, -0.8, -1.0], // 暴漲後A轉倒貨
+            [0, -0.8, -1.0, 0.2, 0.8, 1.0],  // 暴跌後V轉軋空
+            [0, 0.3, -0.1, 0.5, 0.2, 0.8],   // 震盪洗盤向上
+            [0, -0.3, 0.1, -0.5, -0.2, -0.8] // 震盪洗盤向下
+        ];
+        let pattern = scenarios[Math.floor(Math.random() * scenarios.length)];
         
-        const pivots = [w0, w1, w2, w3, w4, w5];
-        const steps = [20, 15, 30, 15, 20]; 
-        
-        let prevClose = w0;
+        let multiplier = basePrice * volatility;
+        let pivots = pattern.map(p => basePrice + p * multiplier);
+
+        // 隨機分配每段長度 (避開固定 20,15,30...)
+        let steps = [];
+        let remaining = 100;
+        for(let i=0; i<4; i++) {
+            let s = 10 + Math.floor(Math.random() * 15);
+            steps.push(s);
+            remaining -= s;
+        }
+        steps.push(remaining); 
+
+        let prevClose = basePrice;
+        let cumulativeOffset = 0; 
+        let globalIndex = 0;
+
         for(let w = 0; w < 5; w++) {
             let start = pivots[w], end = pivots[w+1], waveDiff = end - start, stepCount = steps[w];
             for(let i = 0; i < stepCount; i++) {
                 let progress = (i+1)/stepCount;
                 let easedProgress = (1 - Math.cos(progress * Math.PI)) / 2; 
-                let target = start + waveDiff * easedProgress;
                 
+                // 觸發黑天鵝斷層
+                if (globalIndex === execIndex) {
+                    cumulativeOffset += prevClose * newsImpact;
+                }
+
+                let target = start + waveDiff * easedProgress + cumulativeOffset;
                 let open = prevClose;
-                let noise = Math.abs(waveDiff) * 0.25 * (Math.random() - 0.5);
+                let noise = Math.abs(waveDiff) * 0.3 * (Math.random() - 0.5);
                 let close = Math.max(0.00001, target + noise); 
-                let high = Math.max(open, close) + Math.abs(waveDiff) * 0.08 * Math.random();
-                let low = Math.min(open, close) - Math.abs(waveDiff) * 0.08 * Math.random();
+                
+                let wickFactor = Math.abs(waveDiff) * 0.15 * Math.random();
+                let high = Math.max(open, close) + wickFactor;
+                let low = Math.min(open, close) - wickFactor;
                 
                 data.push({open, close, high, low});
                 prevClose = close;
+                globalIndex++;
             }
         }
         return data;
     }
 
-    function startGame() {
+    function startGame(isEasy = false) {
+        if(!isEasy) isEasyMode = false;
         playerName = document.getElementById('playerName').value || "無名韭菜";
         bgmAudio.playbackRate = 1.0; 
         if (bgmAudio.paused && !isMuted) bgmAudio.play().catch(e => {});
@@ -303,34 +377,102 @@
         balance = initCapital; currentStep = 10;
         longPos = 0; longMargin = 0; longCost = 0;
         shortPos = 0; shortMargin = 0; shortCost = 0;
+        hasLostInEasy = false;
+        panOffset = 0; visibleCount = 30;
 
         document.getElementById('inGameLev').innerText = leverage;
         document.getElementById('alert-box').style.display = 'none';
+        
+        if (isEasyMode) { document.getElementById('btn-next').classList.add('btn-flash'); }
         
         marketData = generateFibData();
         document.getElementById('start-screen').style.display = 'none';
         resizeCanvas(); updateUI(); draw();
     }
 
+    /* ---------------- 圖表拖曳與縮放邏輯 ---------------- */
     const canvas = document.getElementById('mainChart'), ctx = canvas.getContext('2d');
+    
     function resizeCanvas() { const rect = canvas.parentElement.getBoundingClientRect(); canvas.width = rect.width; canvas.height = rect.height; }
+    
+    canvas.addEventListener('pointerdown', e => { 
+        isDragging = true; startX = e.clientX; startPan = panOffset; canvas.setPointerCapture(e.pointerId); 
+    });
+    
+    canvas.addEventListener('pointermove', e => {
+        if(!isDragging) return;
+        let dx = e.clientX - startX;
+        let candleW = canvas.width / visibleCount;
+        panOffset = startPan + (dx / candleW);
+        if(panOffset < 0) panOffset = 0;
+        let maxPan = currentStep - visibleCount;
+        if(panOffset > maxPan) panOffset = Math.max(0, maxPan);
+        draw();
+    });
+    
+    canvas.addEventListener('pointerup', e => { isDragging = false; canvas.releasePointerCapture(e.pointerId); });
+
+    function zoomChart(delta) {
+        visibleCount += delta;
+        if(visibleCount < 10) visibleCount = 10;
+        if(visibleCount > 100) visibleCount = 100;
+        if(visibleCount > currentStep) visibleCount = currentStep;
+        let maxPan = currentStep - visibleCount;
+        if(panOffset > maxPan) panOffset = Math.max(0, maxPan);
+        draw();
+    }
+
+    function resetView() { visibleCount = 30; panOffset = 0; draw(); }
+
+    window.addEventListener('resize', () => { resizeCanvas(); if(marketData.length > 0) draw(); });
+
     function draw() {
         const w = canvas.width, h = canvas.height; if(w === 0 || h === 0) return;
-        const displayCount = 30; const visibleData = marketData.slice(Math.max(0, currentStep - displayCount), currentStep);
+        
+        if(panOffset > 0.5 || visibleCount !== 30) {
+            document.getElementById('reset-view-btn').style.display = 'flex';
+        } else {
+            document.getElementById('reset-view-btn').style.display = 'none';
+        }
+
+        let endIndex = Math.floor(currentStep - panOffset);
+        let startIndex = Math.max(0, endIndex - visibleCount);
+        const visibleData = marketData.slice(startIndex, endIndex);
+        if(visibleData.length === 0) return;
+
         const minP = Math.min(...visibleData.map(d => d.low)) * 0.995, maxP = Math.max(...visibleData.map(d => d.high)) * 1.005;
-        const range = maxP - minP, cW = w / displayCount;
+        const range = maxP - minP, cW = w / visibleCount;
+        
         ctx.clearRect(0,0,w,h);
+        
+        const drawCostLine = (cost, color, label) => {
+            if (cost > minP && cost < maxP) {
+                let y = h - ((cost - minP) / range) * h;
+                ctx.strokeStyle = color; ctx.lineWidth = 1.5; ctx.setLineDash([5, 5]);
+                ctx.beginPath(); ctx.moveTo(0, y); ctx.lineTo(w, y); ctx.stroke();
+                ctx.setLineDash([]);
+                ctx.fillStyle = color; ctx.font = 'bold 11px sans-serif'; ctx.fillText(label, 5, y - 5);
+            }
+        };
+        if (longPos > 0) drawCostLine(longCost, 'var(--up-color)', '做多均價');
+        if (shortPos > 0) drawCostLine(shortCost, 'var(--down-color)', '做空均價');
+
         visibleData.forEach((d, i) => {
             const x = i * cW + 2, getY = (p) => h - ((p - minP) / range) * h;
             ctx.fillStyle = d.close >= d.open ? '#00c087' : '#ff3b30';
             ctx.fillRect(x, getY(Math.max(d.open, d.close)), cW - 4, Math.max(1, Math.abs(getY(d.open) - getY(d.close))));
             ctx.strokeStyle = ctx.fillStyle; ctx.beginPath(); ctx.moveTo(x + cW/2 - 2, getY(d.high)); ctx.lineTo(x + cW/2 - 2, getY(d.low)); ctx.stroke();
         });
-        const lastPrice = marketData[currentStep-1].close, tag = document.getElementById('price-tag');
-        tag.style.top = (h - ((lastPrice - minP) / range) * h - 10) + 'px'; tag.innerText = lastPrice.toFixed(coinName==='BTC'?1:4);
+        
+        const lastVisiblePrice = visibleData[visibleData.length-1].close;
+        const tag = document.getElementById('price-tag');
+        tag.style.top = (h - ((lastVisiblePrice - minP) / range) * h - 10) + 'px'; 
+        tag.innerText = lastVisiblePrice.toFixed(coinName==='BTC'?1:4);
     }
 
     function action(type) {
+        document.getElementById('btn-next').classList.remove('btn-flash'); 
+        
         const price = marketData[currentStep-1].close;
         const pct = parseInt(document.getElementById('buyAmountSlider').value) / 100;
         const margin = balance * pct;
@@ -351,14 +493,24 @@
             if (longPos > 0 || shortPos > 0) {
                 const lPnl = longPos > 0 ? (price - longCost) * longPos : 0;
                 const sPnl = shortPos > 0 ? (shortCost - price) * shortPos : 0;
+                
+                if (isEasyMode && (lPnl + sPnl) < 0 && !hasLostInEasy) {
+                    showMsg("新手建議見好就收，留得青山在！", 2500);
+                    hasLostInEasy = true;
+                } else {
+                    playSound('close');
+                }
+
                 balance += (longMargin + lPnl + shortMargin + sPnl);
                 longPos = 0; longMargin = 0; longCost = 0;
                 shortPos = 0; shortMargin = 0; shortCost = 0;
-                playSound('close');
             } else { showMsg("手上沒單"); return; }
         }
         
-        if(type !== 'closeAll' || (longPos===0 && shortPos===0)) currentStep++; 
+        if(type === 'wait' || type === 'closeAll' && (longPos===0 && shortPos===0)) {
+            currentStep++; 
+            if(panOffset > 0) panOffset++; 
+        }
         checkStatus();
     }
 
@@ -369,8 +521,23 @@
         const equity = balance + longMargin + lPnl + shortMargin + sPnl;
         const now = Date.now();
 
+        // 觸發黑天鵝新聞 UI
+        if (window.newsAlerts[currentStep]) {
+            const abox = document.getElementById('alert-box');
+            abox.innerText = "📰 " + window.newsAlerts[currentStep];
+            abox.style.background = "rgba(240, 185, 11, 0.95)";
+            abox.style.color = "black";
+            abox.style.display = 'block';
+            bgmAudio.playbackRate = 1.1; 
+            setTimeout(() => { if(abox.innerText.includes("📰")) abox.style.display = 'none'; }, 3500);
+        }
+
         if (currentStep === ALERT_STEP) {
-            document.getElementById('alert-box').style.display = 'block';
+            const abox = document.getElementById('alert-box');
+            abox.innerText = "⚠️ 倒數 15 根 K 線！";
+            abox.style.background = "rgba(255, 59, 48, 0.95)";
+            abox.style.color = "white";
+            abox.style.display = 'block';
             bgmAudio.playbackRate = 1.35; 
         }
 
@@ -412,7 +579,10 @@
         document.getElementById('sellBtn').disabled = (longPos <= 0 && shortPos <= 0);
     }
 
-    function showMsg(t) { const b = document.getElementById('msg-box'); b.innerText = t; b.style.display = 'block'; setTimeout(() => b.style.display = 'none', 1200); }
+    function showMsg(t, duration = 1200) { 
+        const b = document.getElementById('msg-box'); b.innerText = t; b.style.display = 'block'; 
+        setTimeout(() => b.style.display = 'none', duration); 
+    }
 
     function endGame(isLiq, finalEquity) {
         document.getElementById('overlay').style.display = 'flex';
@@ -429,11 +599,11 @@
         if (isLiq || currentUserRoi <= -90) { 
             rank = "RANK: F"; sub = `☠️ 穿倉！倒欠莊家 ${Math.abs(finalEquity).toFixed(2)} U`; color = "var(--down-color)"; 
         } else if (currentUserRoi < 0) { 
-            if (alpha > 20) { rank = "RANK: C+"; sub = "📉 雖然虧了，但你做空跑贏了大盤！"; color = "#ff9500"; }
+            if (alpha > 20 && allowShort) { rank = "RANK: C+"; sub = "📉 雖然虧了，但你做空跑贏了大盤！"; color = "#ff9500"; }
             else { rank = "RANK: D"; sub = "🧼 牢底坐穿，韭菜就是你"; color = "var(--down-color)"; }
         } else {
             if (alpha < -20) { rank = "RANK: B-"; sub = "🐢 賺錢但瞎忙一場，不如DCA"; color = "#34c759"; }
-            else if (alpha > 50) { rank = "RANK: SSS"; sub = "🔥 對沖大師！完美的波段收割！"; color = "var(--accent)"; }
+            else if (alpha > 50) { rank = "RANK: SSS"; sub = "🔥 交易大師！完美的波段收割！"; color = "var(--accent)"; }
             else { rank = "RANK: A"; sub = "📈 穩健操盤手，賭性不夠強烈"; color = "var(--up-color)"; }
         }
 
@@ -442,27 +612,25 @@
         document.getElementById('rank-subtitle').innerText = sub;
         document.getElementById('rank-subtitle').style.color = color;
         
-        document.getElementById('res-roi').innerText = (currentUserRoi > 0 ? "+" : "") + currentUserRoi.toFixed(2) + "%";
-        document.getElementById('res-roi').style.color = currentUserRoi >= 0 ? "var(--up-color)" : "var(--down-color)";
-        document.getElementById('res-mkt').innerText = (marketRoi > 0 ? "+" : "") + marketRoi.toFixed(2) + "%";
         document.getElementById('res-alpha').innerText = (alpha > 0 ? "+" : "") + alpha.toFixed(2) + "%";
         document.getElementById('res-alpha').style.color = alpha >= 0 ? "var(--up-color)" : "var(--down-color)";
+        document.getElementById('res-mkt').innerText = (marketRoi > 0 ? "+" : "") + marketRoi.toFixed(2) + "%";
+        document.getElementById('res-roi').innerText = (currentUserRoi > 0 ? "+" : "") + currentUserRoi.toFixed(2) + "%";
+        document.getElementById('res-roi').style.color = currentUserRoi >= 0 ? "var(--up-color)" : "var(--down-color)";
 
         const devilQuote = devilQuotes[Math.floor(Math.random() * devilQuotes.length)];
         document.getElementById('devil-text').innerText = `"${devilQuote}"`;
 
-        // 恢復儲存按鈕狀態
         const saveBtn = document.getElementById('save-lb-btn');
-        saveBtn.innerText = "💾 記錄神操作";
+        saveBtn.innerText = "💾 記在排行榜";
         saveBtn.disabled = false;
         saveBtn.style.opacity = "1";
     }
 
-    // 手動加入排行榜邏輯
     function saveToLeaderboard() {
         realLeaderboard.push({ name: playerName, coin: coinName, roi: currentUserRoi });
         realLeaderboard.sort((a, b) => b.roi - a.roi); 
-        realLeaderboard = realLeaderboard.slice(0, 10); // 確保永遠只存前 10 名，不會卡頓
+        realLeaderboard = realLeaderboard.slice(0, 10); 
         localStorage.setItem('realCryptoLb', JSON.stringify(realLeaderboard));
 
         const saveBtn = document.getElementById('save-lb-btn');
@@ -496,6 +664,13 @@
     }
 
     function closeLeaderboard() { document.getElementById('lb-modal').style.display = 'none'; }
+
+    document.addEventListener("visibilitychange", () => {
+        if (document.hidden) { bgmAudio.pause(); } 
+        else if (!isMuted && document.getElementById('start-screen').style.display === 'none' && document.getElementById('overlay').style.display === 'none') {
+            bgmAudio.play().catch(e => {});
+        }
+    });
 
     window.onload = () => { rollName(); setTimeout(resizeCanvas, 100); };
 </script>
