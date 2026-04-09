@@ -297,14 +297,13 @@
         const isBTC = coinName === 'BTC';
         const basePrice = isBTC ? 50000 + Math.random()*20000 : 0.1 + Math.random()*0.3; 
         
-        // 1. 放大日常隨機波動 (BTC 1.2%, DOGE 3.5%)
+        // 1. 日常隨機波動
         const vol = isBTC ? 0.012 : 0.035; 
-        
-        // 2. 鎖定事件與新聞的基礎強度 (不隨機跟著放大，避免一擊必殺)
         const eventVol = isBTC ? 0.005 : 0.015; 
 
         let returns = new Array(120).fill(0);
 
+        // 宏觀大趨勢
         const macroTrend = Math.floor(Math.random() * 4);
 
         for(let i=0; i<120; i++) {
@@ -320,12 +319,23 @@
             returns[i] = trendDrift + wave + noise;
         }
 
-        // 主力劇本注入 (使用固定的 eventVol)
+        // 中型日常波動 (約 7 次/60根，不連續)
+        let lastSpikeIdx = -10; 
+        for(let i=0; i<120; i++) {
+            if (Math.random() < 0.12 && (i - lastSpikeIdx > 1)) {
+                let spikeDir = Math.random() > 0.5 ? 1 : -1;
+                let mediumSpike = vol * (1.5 + Math.random() * 1.0) * spikeDir;
+                returns[i] += mediumSpike;
+                lastSpikeIdx = i;
+            }
+        }
+
+        // 2. 主力劇本注入
         let numPatterns = 1 + Math.floor(Math.random() * 2);
         for(let p=0; p<numPatterns; p++) {
             let startIdx = 10 + Math.floor(Math.random() * 40); 
             let type = Math.floor(Math.random() * 4); 
-            let intensity = eventVol * (3 + Math.random()*2); // 維持合理強度
+            let intensity = eventVol * (3 + Math.random()*2); 
 
             if(type === 0) { 
                 returns[startIdx] = intensity; returns[startIdx+1] = intensity;
@@ -340,7 +350,7 @@
             }
         }
 
-        // 黑天鵝事件 (使用固定常數，避免被基底波動拉爆)
+        // 3. 黑天鵝事件 (中辣強度)
         let hasNews = Math.random() > 0.3; 
         let execIndex = -1;
         if(hasNews) {
@@ -350,42 +360,24 @@
             let isFakeout = Math.random() > 0.4; 
 
             const bullNews = [
-    "突發：交戰國簽訂停戰協議！", 
-    "突發：聯準會緊急降息兩碼！", 
-    "突發：馬斯克發推力挺！",
-    "突發：蘋果宣布將比特幣納入公司資產儲備！",
-    "突發：中東土豪國主權基金宣布重倉買入！",
-    "突發：SEC 意外批准所有現貨 ETF 申請！",
-    "突發：某神祕巨鯨直接銷毀了總量 10% 的代幣！",
-    "突發：亞馬遜宣布全面接受加密貨幣支付！",
-    "突發：知名支付巨頭整合加密貨幣結算系統！",
-    "突發：某大國最高法院裁定加密貨幣完全合法！",
-    // 👇 替換的三個【模稜兩可】新聞 (底層判定為觸發牛市/誘多)
-    "突發：SEC 宣布即將推出全面性加密貨幣監管新規！",
-    "突發：聯準會宣布維持利率不變，鮑爾會後聲明語帶玄機！",
-    "突發：全球最大交易所突然暫停提幣，官方稱系統重大升級！"
-];
-
-const bearNews = [
-    "突發：川普向伊朗宣戰！恐慌蔓延！", 
-    "突發：聯準會意外升息！", 
-    "突發：最大交易所遭駭客攻擊！",
-    "突發：美政府錢包突遭轉出 20 萬枚比特幣砸盤！",
-    "突發：最大穩定幣發行商爆出儲備金挪用醜聞！",
-    "突發：某大國宣布全面封殺並強制沒收加密資產！",
-    "突發：知名公鏈遭 51% 算力攻擊，網路大癱瘓！",
-    "突發：華爾街巨頭宣布清倉所有加密貨幣資產！",
-    "突發：核心開發團隊宣布內訌並放棄維護該項目！",
-    "突發：馬斯克發推怒退追蹤，並痛批該幣是騙局！",
-    // 👇 替換的三個【模稜兩可】新聞 (底層判定為觸發熊市/誘空)
-    "突發：沉睡十年的遠古巨鯨錢包突然甦醒，轉移巨額資產！",
-    "突發：開發團隊突然提前解鎖高達 20% 的代幣總量！",
-    "突發：核心社群爆發重大分歧，知名公鏈恐面臨硬分叉！"
-];
-
+                "突發：交戰國簽訂停戰協議！", "突發：聯準會緊急降息兩碼！", "突發：馬斯克發推力挺！",
+                "突發：蘋果宣布將比特幣納入公司資產儲備！", "突發：中東土豪國主權基金宣布重倉買入！",
+                "突發：SEC 意外批准所有現貨 ETF 申請！", "突發：某神祕巨鯨直接銷毀了總量 10% 的代幣！",
+                "突發：亞馬遜宣布全面接受加密貨幣支付！", "突發：知名支付巨頭整合加密貨幣結算系統！",
+                "突發：某大國最高法院裁定加密貨幣完全合法！", "突發：SEC 宣布即將推出全面性加密貨幣監管新規！",
+                "突發：聯準會宣布維持利率不變，鮑爾會後聲明語帶玄機！", "突發：全球最大交易所突然暫停提幣，官方稱系統重大升級！"
+            ];
+            const bearNews = [
+                "突發：川普向伊朗宣戰！恐慌蔓延！", "突發：聯準會意外升息！", "突發：最大交易所遭駭客攻擊！",
+                "突發：美政府錢包突遭轉出 20 萬枚比特幣砸盤！", "突發：最大穩定幣發行商爆出儲備金挪用醜聞！",
+                "突發：某大國宣布全面封殺並強制沒收加密資產！", "突發：知名公鏈遭 51% 算力攻擊，網路大癱瘓！",
+                "突發：華爾街巨頭宣布清倉所有加密貨幣資產！", "突發：核心開發團隊宣布內訌並放棄維護該項目！",
+                "突發：馬斯克發推怒退追蹤，並痛批該幣是騙局！", "突發：沉睡十年的遠古巨鯨錢包突然甦醒，轉移巨額資產！",
+                "突發：開發團隊突然提前解鎖高達 20% 的代幣總量！", "突發：核心社群爆發重大分歧，知名公鏈恐面臨硬分叉！"
+            ];
             window.newsAlerts[alertIndex] = isBullNews ? bullNews[Math.floor(Math.random()*bullNews.length)] : bearNews[Math.floor(Math.random()*bearNews.length)];
 
-            let newsImpact = (isBTC ? 0.05 : 0.15) + Math.random() * 0.03; 
+            let newsImpact = (isBTC ? 0.03 : 0.05) + Math.random() * 0.03; 
 
             if(isBullNews) {
                 if(isFakeout) { 
@@ -408,7 +400,7 @@ const bearNews = [
             }
         }
 
-        // 生成價格
+        // 4. 生成價格與引線比例
         let prevClose = basePrice;
         for(let i=0; i<120; i++) {
             let open = prevClose;
@@ -666,7 +658,7 @@ const bearNews = [
             sub = `☠️ 槓桿拉滿，直接抬走！連渣都不剩，甚至還倒欠莊家 ${Math.abs(finalEquity).toFixed(2)} U。天台的風很大，記得穿件厚外套。`; 
             color = "var(--down-color)"; 
         } else if (currentUserRoi < 0) { 
-            if (alpha > 20) { 
+            if (alpha > 20 && allowShort) { 
                 rank = "RANK: C+"; 
                 sub = "📉 大盤跌成狗，雖然你也虧了，但你成功跑贏了市場！在幣圈，少虧就是賺，雖敗猶榮！"; 
                 color = "#ff9500"; 
@@ -702,6 +694,15 @@ const bearNews = [
         document.getElementById('res-roi').innerText = (currentUserRoi > 0 ? "+" : "") + currentUserRoi.toFixed(2) + "%";
         document.getElementById('res-roi').style.color = currentUserRoi >= 0 ? "var(--up-color)" : "var(--down-color)";
 
+        // 如果想設定更多惡魔的低語可以加在這裡
+        const devilQuotes = [
+            "膽子大一點，100 倍槓桿別猶豫！贏了會所嫩模，輸了下海幹活。",
+            "才賺這點？高槓桿才是暴富的唯一真理，下次拉滿吧！",
+            "真正的勇士，都是帶著 50 倍槓桿睡覺的。",
+            "怕爆倉就不要玩合約，下次把槓桿拉到最右邊試試？",
+            "別人恐懼我貪婪，別人小虧我破產",
+            "人生沒有重來，但槓桿可以重開。100倍，懂？"
+        ];
         const devilQuote = devilQuotes[Math.floor(Math.random() * devilQuotes.length)];
         document.getElementById('devil-text').innerText = `"${devilQuote}"`;
 
