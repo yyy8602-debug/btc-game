@@ -31,6 +31,7 @@
         .chart-btn { background: rgba(30,35,41,0.8); border: 1px solid #555; color: white; border-radius: 6px; width: 28px; height: 28px; font-size: 14px; display: flex; justify-content: center; align-items: center; cursor: pointer; backdrop-filter: blur(2px); }
         .chart-btn-wide { width: auto; padding: 0 8px; font-size: 11px; font-weight: bold; display: none; background: rgba(240, 185, 11, 0.2); border-color: var(--accent); color: var(--accent);}
 
+        /* 警告與新聞彈窗 */
         #alert-box { position: absolute; top: 15px; left: 50%; transform: translateX(-50%); background: rgba(255,59,48,0.9); padding: 6px 12px; border-radius: 20px; font-weight: bold; font-size: 11px; display: none; z-index: 10; border: 1px solid white; animation: pulse 1s infinite; white-space: nowrap; box-shadow: 0 4px 10px rgba(0,0,0,0.5); }
         @keyframes pulse { 0% { transform: translateX(-50%) scale(1); } 50% { transform: translateX(-50%) scale(1.05); } 100% { transform: translateX(-50%) scale(1); } }
         
@@ -41,15 +42,13 @@
         .slider-container { margin-bottom: 12px; display: flex; align-items: center; justify-content: space-between; }
         input[type=range] { flex-grow: 1; margin: 0 15px; accent-color: var(--accent); }
         
-        /* 修復全域 button 高度問題 */
         button { border: none; border-radius: 6px; font-size: 14px; font-weight: bold; color: white; cursor: pointer; transition: transform 0.1s; padding: 8px 12px;}
         button:active { transform: scale(0.95); opacity: 0.8; }
         button:disabled { opacity: 0.2; filter: grayscale(1); cursor: not-allowed; transform: none; }
         
-        /* 下方操作面板專屬設定 */
         .btn-group { display: grid; grid-template-columns: 1fr 1fr 1fr 1fr; gap: 8px; height: 45px; }
         .btn-group.no-short { grid-template-columns: 1.5fr 1fr 1fr; }
-        .btn-group button { height: 100%; padding: 0; } /* 只有這裡才延展 100% */
+        .btn-group button { height: 100%; padding: 0; } 
         
         .btn-long { background-color: var(--up-color); } 
         .btn-short { background-color: var(--down-color); } 
@@ -91,7 +90,6 @@
         #rank-title { font-size: 26px !important; }
         #rank-subtitle { font-size: 12px !important; }
         
-        /* 修正進入市場按鈕樣式 */
         #enter-market-btn { background: var(--up-color); color: white; width: 100%; max-width: 200px; padding: 12px; border-radius: 8px; font-size: 14px; margin: 15px auto 0 auto; display: block; box-shadow: 0 4px 10px rgba(0, 192, 135, 0.4); }
     </style>
 </head>
@@ -298,11 +296,15 @@
         let data = [];
         const isBTC = coinName === 'BTC';
         const basePrice = isBTC ? 50000 + Math.random()*20000 : 0.1 + Math.random()*0.3; 
-        const vol = isBTC ? 0.005 : 0.015; 
+        
+        // 1. 放大日常隨機波動 (BTC 1.2%, DOGE 3.5%)
+        const vol = isBTC ? 0.012 : 0.035; 
+        
+        // 2. 鎖定事件與新聞的基礎強度 (不隨機跟著放大，避免一擊必殺)
+        const eventVol = isBTC ? 0.005 : 0.015; 
 
         let returns = new Array(120).fill(0);
 
-        // 1. 大趨勢分配 (4種)
         const macroTrend = Math.floor(Math.random() * 4);
 
         for(let i=0; i<120; i++) {
@@ -312,18 +314,18 @@
             else if (macroTrend === 2) trendDrift = (i < 60) ? vol * 0.35 : -vol * 0.35;
             else if (macroTrend === 3) trendDrift = (i < 60) ? -vol * 0.35 : vol * 0.35;
 
-            let wave = Math.sin(i / 8) * vol * 0.4; // 呼吸波浪
-            let noise = (Math.random() - 0.5) * vol; // 單根隨機雜訊
+            let wave = Math.sin(i / 8) * vol * 0.4; 
+            let noise = (Math.random() - 0.5) * vol; 
             
             returns[i] = trendDrift + wave + noise;
         }
 
-        // 2. 主力劇本注入
+        // 主力劇本注入 (使用固定的 eventVol)
         let numPatterns = 1 + Math.floor(Math.random() * 2);
         for(let p=0; p<numPatterns; p++) {
             let startIdx = 10 + Math.floor(Math.random() * 40); 
             let type = Math.floor(Math.random() * 4); 
-            let intensity = vol * (3 + Math.random()*2); 
+            let intensity = eventVol * (3 + Math.random()*2); // 維持合理強度
 
             if(type === 0) { 
                 returns[startIdx] = intensity; returns[startIdx+1] = intensity;
@@ -338,7 +340,7 @@
             }
         }
 
-        // 3. 黑天鵝事件 (假動作)
+        // 黑天鵝事件 (使用固定常數，避免被基底波動拉爆)
         let hasNews = Math.random() > 0.3; 
         let execIndex = -1;
         if(hasNews) {
@@ -374,7 +376,7 @@
             }
         }
 
-        // 4. 生成價格與完美的引線比例
+        // 生成價格
         let prevClose = basePrice;
         for(let i=0; i<120; i++) {
             let open = prevClose;
@@ -667,6 +669,9 @@
         document.getElementById('res-mkt').innerText = (marketRoi > 0 ? "+" : "") + marketRoi.toFixed(2) + "%";
         document.getElementById('res-roi').innerText = (currentUserRoi > 0 ? "+" : "") + currentUserRoi.toFixed(2) + "%";
         document.getElementById('res-roi').style.color = currentUserRoi >= 0 ? "var(--up-color)" : "var(--down-color)";
+
+        const devilQuote = devilQuotes[Math.floor(Math.random() * devilQuotes.length)];
+        document.getElementById('devil-text').innerText = `"${devilQuote}"`;
 
         const saveBtn = document.getElementById('save-lb-btn');
         saveBtn.innerText = "💾 記在排行榜";
