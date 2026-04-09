@@ -385,7 +385,7 @@ const bearNews = [
 
             window.newsAlerts[alertIndex] = isBullNews ? bullNews[Math.floor(Math.random()*bullNews.length)] : bearNews[Math.floor(Math.random()*bearNews.length)];
 
-            let newsImpact = (isBTC ? 0.05 : 0.15) + Math.random() * 0.1; 
+            let newsImpact = (isBTC ? 0.05 : 0.15) + Math.random() * 0.03; 
 
             if(isBullNews) {
                 if(isFakeout) { 
