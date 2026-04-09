@@ -31,7 +31,6 @@
         .chart-btn { background: rgba(30,35,41,0.8); border: 1px solid #555; color: white; border-radius: 6px; width: 28px; height: 28px; font-size: 14px; display: flex; justify-content: center; align-items: center; cursor: pointer; backdrop-filter: blur(2px); }
         .chart-btn-wide { width: auto; padding: 0 8px; font-size: 11px; font-weight: bold; display: none; background: rgba(240, 185, 11, 0.2); border-color: var(--accent); color: var(--accent);}
 
-        /* 警告與新聞彈窗 */
         #alert-box { position: absolute; top: 15px; left: 50%; transform: translateX(-50%); background: rgba(255,59,48,0.9); padding: 6px 12px; border-radius: 20px; font-weight: bold; font-size: 11px; display: none; z-index: 10; border: 1px solid white; animation: pulse 1s infinite; white-space: nowrap; box-shadow: 0 4px 10px rgba(0,0,0,0.5); }
         @keyframes pulse { 0% { transform: translateX(-50%) scale(1); } 50% { transform: translateX(-50%) scale(1.05); } 100% { transform: translateX(-50%) scale(1); } }
         
@@ -86,7 +85,6 @@
         .lb-row span:last-child { font-weight: bold; text-align: right; }
         .lb-header { font-weight: bold; color: var(--text-dim); font-size: 11px; border-bottom: 2px solid #333; padding-bottom: 5px; }
 
-        .devil-whisper { margin-top: 15px; font-size: 12px; color: var(--text-dim); font-style: italic; max-width: 280px; line-height: 1.5; }
         #rank-title { font-size: 26px !important; }
         #rank-subtitle { font-size: 12px !important; }
         
@@ -199,6 +197,7 @@
         </div>
 
         <button onclick="location.reload()" style="background: var(--accent); color: black; width: 100%; max-width: 300px; margin-top: 5px;">再戰一場</button>
+        <div id="devil-text" style="margin-top: 20px; font-size: 12px; color: var(--text-dim); font-style: italic; max-width: 280px;"></div>
     </div>
 
     <div id="lb-modal">
@@ -297,132 +296,79 @@
         const isBTC = coinName === 'BTC';
         const basePrice = isBTC ? 50000 + Math.random()*20000 : 0.1 + Math.random()*0.3; 
         
-        // 1. 日常隨機波動
-        const vol = isBTC ? 0.012 : 0.035; 
-        const eventVol = isBTC ? 0.005 : 0.015; 
+        const vol = isBTC ? 0.025 : 0.06; 
+        const eventVol = isBTC ? 0.015 : 0.035; 
 
         let returns = new Array(120).fill(0);
 
-        // 宏觀大趨勢
-        const macroTrend = Math.floor(Math.random() * 4);
-
+        let currentTrendType = 0;
         for(let i=0; i<120; i++) {
-            let trendDrift = 0;
-            if (macroTrend === 0) trendDrift = vol * 0.25;
-            else if (macroTrend === 1) trendDrift = -vol * 0.25;
-            else if (macroTrend === 2) trendDrift = (i < 60) ? vol * 0.35 : -vol * 0.35;
-            else if (macroTrend === 3) trendDrift = (i < 60) ? -vol * 0.35 : vol * 0.35;
-
-            let wave = Math.sin(i / 8) * vol * 0.4; 
-            let noise = (Math.random() - 0.5) * vol; 
+            let chunkIndex = i % 6; 
+            if (chunkIndex === 0) currentTrendType = Math.floor(Math.random() * 5);
             
-            returns[i] = trendDrift + wave + noise;
+            let trendDrift = 0;
+            if (currentTrendType === 0) trendDrift = vol * 0.35;
+            else if (currentTrendType === 1) trendDrift = -vol * 0.35;
+            else if (currentTrendType === 2) trendDrift = (chunkIndex < 3) ? vol * 0.5 : -vol * 0.5;
+            else if (currentTrendType === 3) trendDrift = (chunkIndex < 3) ? -vol * 0.5 : vol * 0.5;
+            else if (currentTrendType === 4) trendDrift = Math.sin((chunkIndex / 5) * Math.PI * 2) * vol * 0.5;
+
+            let noise = (Math.random() - 0.5) * vol * 1.5; 
+            returns[i] = trendDrift + noise;
         }
 
-        // 中型日常波動 (約 7 次/60根，不連續)
         let lastSpikeIdx = -10; 
         for(let i=0; i<120; i++) {
             if (Math.random() < 0.12 && (i - lastSpikeIdx > 1)) {
                 let spikeDir = Math.random() > 0.5 ? 1 : -1;
-                let mediumSpike = vol * (1.5 + Math.random() * 1.0) * spikeDir;
+                let mediumSpike = vol * (1.2 + Math.random() * 0.8) * spikeDir;
                 returns[i] += mediumSpike;
                 lastSpikeIdx = i;
             }
         }
 
-        // 2. 主力劇本注入
         let numPatterns = 1 + Math.floor(Math.random() * 2);
         for(let p=0; p<numPatterns; p++) {
             let startIdx = 10 + Math.floor(Math.random() * 40); 
             let type = Math.floor(Math.random() * 4); 
             let intensity = eventVol * (3 + Math.random()*2); 
-
-            if(type === 0) { 
-                returns[startIdx] = intensity; returns[startIdx+1] = intensity;
-                returns[startIdx+2] = -intensity; returns[startIdx+3] = -intensity;
-            } else if(type === 1) { 
-                returns[startIdx] = -intensity; returns[startIdx+1] = -intensity;
-                returns[startIdx+2] = intensity; returns[startIdx+3] = intensity;
-            } else if(type === 2) { 
-                returns[startIdx+3] = intensity * 2; 
-            } else if(type === 3) { 
-                returns[startIdx+3] = -intensity * 2;
-            }
+            if(type === 0) { returns[startIdx] = intensity; returns[startIdx+1] = intensity; returns[startIdx+2] = -intensity; returns[startIdx+3] = -intensity; }
+            else if(type === 1) { returns[startIdx] = -intensity; returns[startIdx+1] = -intensity; returns[startIdx+2] = intensity; returns[startIdx+3] = intensity; }
+            else if(type === 2) { returns[startIdx+3] = intensity * 2; }
+            else if(type === 3) { returns[startIdx+3] = -intensity * 2; }
         }
 
-        // 3. 黑天鵝事件 (中辣強度)
         let hasNews = Math.random() > 0.3; 
-        let execIndex = -1;
         if(hasNews) {
             let alertIndex = 15 + Math.floor(Math.random() * 20); 
-            execIndex = alertIndex + 1 + Math.floor(Math.random() * 3); 
+            let execIndex = alertIndex + 1 + Math.floor(Math.random() * 3); 
             let isBullNews = Math.random() > 0.5;
             let isFakeout = Math.random() > 0.4; 
-
-            const bullNews = [
-                "突發：交戰國簽訂停戰協議！", "突發：聯準會緊急降息兩碼！", "突發：馬斯克發推力挺！",
-                "突發：蘋果宣布將比特幣納入公司資產儲備！", "突發：中東土豪國主權基金宣布重倉買入！",
-                "突發：SEC 意外批准所有現貨 ETF 申請！", "突發：某神祕巨鯨直接銷毀了總量 10% 的代幣！",
-                "突發：亞馬遜宣布全面接受加密貨幣支付！", "突發：知名支付巨頭整合加密貨幣結算系統！",
-                "突發：某大國最高法院裁定加密貨幣完全合法！", "突發：SEC 宣布即將推出全面性加密貨幣監管新規！",
-                "突發：聯準會宣布維持利率不變，鮑爾會後聲明語帶玄機！", "突發：全球最大交易所突然暫停提幣，官方稱系統重大升級！"
-            ];
-            const bearNews = [
-                "突發：川普向伊朗宣戰！恐慌蔓延！", "突發：聯準會意外升息！", "突發：最大交易所遭駭客攻擊！",
-                "突發：美政府錢包突遭轉出 20 萬枚比特幣砸盤！", "突發：最大穩定幣發行商爆出儲備金挪用醜聞！",
-                "突發：某大國宣布全面封殺並強制沒收加密資產！", "突發：知名公鏈遭 51% 算力攻擊，網路大癱瘓！",
-                "突發：華爾街巨頭宣布清倉所有加密貨幣資產！", "突發：核心開發團隊宣布內訌並放棄維護該項目！",
-                "突發：馬斯克發推怒退追蹤，並痛批該幣是騙局！", "突發：沉睡十年的遠古巨鯨錢包突然甦醒，轉移巨額資產！",
-                "突發：開發團隊突然提前解鎖高達 20% 的代幣總量！", "突發：核心社群爆發重大分歧，知名公鏈恐面臨硬分叉！"
-            ];
+            const bullNews = ["突發：交戰國簽訂停戰協議！", "突發：聯準會緊急降息兩碼！", "突發：馬斯克發推力挺！", "突發：蘋果宣布將比特幣納入公司資產儲備！", "突發：中東土豪國主權基金宣布重倉買入！", "突發：SEC 意外批准所有現貨 ETF 申請！", "突發：某神祕巨鯨直接銷毀了總量 10% 的代幣！", "突發：亞馬遜宣布全面接受加密貨幣支付！", "突發：知名支付巨頭整合加密貨幣結算系統！", "突發：某大國最高法院裁定加密貨幣完全合法！", "突發：SEC 宣布即將推出全面性加密貨幣監管新規！", "突發：聯準會宣布維持利率不變，鮑爾會後聲明語帶玄機！", "突發：全球最大交易所突然暫停提幣，官方稱系統重大升級！"];
+            const bearNews = ["突發：川普向伊朗宣戰！恐慌蔓延！", "突發：聯準會意外升息！", "突發：最大交易所遭駭客攻擊！", "突發：美政府錢包突遭轉出 20 萬枚比特幣砸盤！", "突發：最大穩定幣發行商爆出儲備金挪用醜聞！", "突發：某大國宣布全面封殺並強制沒收加密資產！", "突發：知名公鏈遭 51% 算力攻擊，網路大癱瘓！", "突發：華爾街巨頭宣布清倉所有加密貨幣資產！", "突發：核心開發團隊宣布內訌並放棄維護該項目！", "突發：馬斯克發推怒退追蹤，並痛批該幣是騙局！", "突發：沉睡十年的遠古巨鯨錢包突然甦醒，轉移巨額資產！", "突發：開發團隊突然提前解鎖高達 20% 的代幣總量！", "突發：核心社群爆發重大分歧，知名公鏈恐面臨硬分叉！"];
             window.newsAlerts[alertIndex] = isBullNews ? bullNews[Math.floor(Math.random()*bullNews.length)] : bearNews[Math.floor(Math.random()*bearNews.length)];
-
-            let newsImpact = (isBTC ? 0.03 : 0.05) + Math.random() * 0.03; 
-
+            let newsImpact = (isBTC ? 0.08 : 0.15) + Math.random() * 0.05; 
             if(isBullNews) {
-                if(isFakeout) { 
-                    returns[execIndex] = newsImpact * 0.4; 
-                    returns[execIndex+1] = -newsImpact * 1.2; 
-                    returns[execIndex+2] = -newsImpact * 0.6;
-                } else { 
-                    returns[execIndex] = newsImpact;
-                    returns[execIndex+1] = newsImpact * 0.3;
-                }
+                if(isFakeout) { returns[execIndex] = newsImpact * 0.4; returns[execIndex+1] = -newsImpact * 1.2; returns[execIndex+2] = -newsImpact * 0.6; }
+                else { returns[execIndex] = newsImpact; returns[execIndex+1] = newsImpact * 0.3; }
             } else {
-                if(isFakeout) { 
-                    returns[execIndex] = -newsImpact * 0.4; 
-                    returns[execIndex+1] = newsImpact * 1.2; 
-                    returns[execIndex+2] = newsImpact * 0.6;
-                } else { 
-                    returns[execIndex] = -newsImpact;
-                    returns[execIndex+1] = -newsImpact * 0.3;
-                }
+                if(isFakeout) { returns[execIndex] = -newsImpact * 0.4; returns[execIndex+1] = newsImpact * 1.2; returns[execIndex+2] = newsImpact * 0.6; }
+                else { returns[execIndex] = -newsImpact; returns[execIndex+1] = -newsImpact * 0.3; }
             }
         }
 
-        // 4. 生成價格與引線比例
         let prevClose = basePrice;
         for(let i=0; i<120; i++) {
             let open = prevClose;
-            let jump = Math.random() > 0.95 ? (Math.random()-0.5)*vol : 0;
-            open += open * jump;
-
             let targetReturn = returns[i];
-            let close = open * (1 + targetReturn);
-            close = Math.max(0.00001, close); 
-
+            let close = Math.max(0.00001, open * (1 + targetReturn));
             let bodySize = Math.abs(open - close);
-            let baseWick = open * vol * 0.2; 
-            let upperWick = Math.random() * (bodySize * 0.8 + baseWick);
-            let lowerWick = Math.random() * (bodySize * 0.8 + baseWick);
-
-            let high = Math.max(open, close) + upperWick;
-            let low = Math.max(0.00001, Math.min(open, close) - lowerWick);
-
-            data.push({open, close, high, low});
+            let baseWick = open * vol * 0.15; 
+            let upperWick = Math.random() * (bodySize * 0.6 + baseWick);
+            let lowerWick = Math.random() * (bodySize * 0.6 + baseWick);
+            data.push({open, close, high: Math.max(open, close) + upperWick, low: Math.max(0.00001, Math.min(open, close) - lowerWick)});
             prevClose = close;
         }
-
         return data;
     }
 
@@ -430,32 +376,24 @@
         if(!isEasy) isEasyMode = false;
         playerName = document.getElementById('playerName').value || "無名韭菜";
         bgmAudio.playbackRate = 1.0; 
+        bgmAudio.currentTime = 0; // 重啟一把遊戲，音樂從頭開始
         if (bgmAudio.paused && !isMuted) bgmAudio.play().catch(e => {});
         
         balance = initCapital; currentStep = 10;
         longPos = 0; longMargin = 0; longCost = 0;
         shortPos = 0; shortMargin = 0; shortCost = 0;
-        hasLostInEasy = false;
-        panOffset = 0; visibleCount = 30;
-
+        hasLostInEasy = false; panOffset = 0; visibleCount = 30;
         document.getElementById('inGameLev').innerText = leverage;
         document.getElementById('alert-box').style.display = 'none';
-        
-        if (isEasyMode) { document.getElementById('btn-next').classList.add('btn-flash'); }
-        
+        if (isEasyMode) document.getElementById('btn-next').classList.add('btn-flash');
         marketData = generateMarketData(); 
         document.getElementById('start-screen').style.display = 'none';
         resizeCanvas(); updateUI(); draw();
     }
 
     const canvas = document.getElementById('mainChart'), ctx = canvas.getContext('2d');
-    
     function resizeCanvas() { const rect = canvas.parentElement.getBoundingClientRect(); canvas.width = rect.width; canvas.height = rect.height; }
-    
-    canvas.addEventListener('pointerdown', e => { 
-        isDragging = true; startX = e.clientX; startPan = panOffset; canvas.setPointerCapture(e.pointerId); 
-    });
-    
+    canvas.addEventListener('pointerdown', e => { isDragging = true; startX = e.clientX; startPan = panOffset; canvas.setPointerCapture(e.pointerId); });
     canvas.addEventListener('pointermove', e => {
         if(!isDragging) return;
         let dx = e.clientX - startX;
@@ -466,7 +404,6 @@
         if(panOffset > maxPan) panOffset = Math.max(0, maxPan);
         draw();
     });
-    
     canvas.addEventListener('pointerup', e => { isDragging = false; canvas.releasePointerCapture(e.pointerId); });
 
     function zoomChart(delta) {
@@ -474,289 +411,157 @@
         if(visibleCount < 10) visibleCount = 10;
         if(visibleCount > 100) visibleCount = 100;
         if(visibleCount > currentStep) visibleCount = currentStep;
-        let maxPan = currentStep - visibleCount;
-        if(panOffset > maxPan) panOffset = Math.max(0, maxPan);
         draw();
     }
 
     function resetView() { visibleCount = 30; panOffset = 0; draw(); }
 
-    window.addEventListener('resize', () => { resizeCanvas(); if(marketData.length > 0) draw(); });
-
     function draw() {
         const w = canvas.width, h = canvas.height; if(w === 0 || h === 0) return;
-        
-        if(panOffset > 0.5 || visibleCount !== 30) {
-            document.getElementById('reset-view-btn').style.display = 'flex';
-        } else {
-            document.getElementById('reset-view-btn').style.display = 'none';
-        }
-
+        document.getElementById('reset-view-btn').style.display = (panOffset > 0.5 || visibleCount !== 30) ? 'flex' : 'none';
         let endIndex = Math.floor(currentStep - panOffset);
         let startIndex = Math.max(0, endIndex - visibleCount);
         const visibleData = marketData.slice(startIndex, endIndex);
         if(visibleData.length === 0) return;
-
         const minP = Math.min(...visibleData.map(d => d.low)) * 0.995, maxP = Math.max(...visibleData.map(d => d.high)) * 1.005;
         const range = maxP - minP, cW = w / visibleCount;
-        
         ctx.clearRect(0,0,w,h);
-        
-        const drawCostLine = (cost, color, label) => {
-            if (cost > minP && cost < maxP) {
-                let y = h - ((cost - minP) / range) * h;
+        const drawLine = (p, color, lbl) => {
+            if (p > minP && p < maxP) {
+                let y = h - ((p - minP) / range) * h;
                 ctx.strokeStyle = color; ctx.lineWidth = 1.5; ctx.setLineDash([5, 5]);
-                ctx.beginPath(); ctx.moveTo(0, y); ctx.lineTo(w, y); ctx.stroke();
-                ctx.setLineDash([]);
-                ctx.fillStyle = color; ctx.font = 'bold 11px sans-serif'; ctx.fillText(label, 5, y - 5);
+                ctx.beginPath(); ctx.moveTo(0, y); ctx.lineTo(w, y); ctx.stroke(); ctx.setLineDash([]);
+                ctx.fillStyle = color; ctx.font = 'bold 11px sans-serif'; ctx.fillText(lbl, 5, y - 5);
             }
         };
-        if (longPos > 0) drawCostLine(longCost, 'var(--up-color)', '做多均價');
-        if (shortPos > 0) drawCostLine(shortCost, 'var(--down-color)', '做空均價');
-
+        if (longPos > 0) drawLine(longCost, 'var(--up-color)', '做多均價');
+        if (shortPos > 0) drawLine(shortCost, 'var(--down-color)', '做空均價');
         visibleData.forEach((d, i) => {
             const x = i * cW + 2, getY = (p) => h - ((p - minP) / range) * h;
             ctx.fillStyle = d.close >= d.open ? '#00c087' : '#ff3b30';
             ctx.fillRect(x, getY(Math.max(d.open, d.close)), cW - 4, Math.max(1, Math.abs(getY(d.open) - getY(d.close))));
             ctx.strokeStyle = ctx.fillStyle; ctx.beginPath(); ctx.moveTo(x + cW/2 - 2, getY(d.high)); ctx.lineTo(x + cW/2 - 2, getY(d.low)); ctx.stroke();
         });
-        
-        const lastVisiblePrice = visibleData[visibleData.length-1].close;
+        const lastP = visibleData[visibleData.length-1].close;
         const tag = document.getElementById('price-tag');
-        tag.style.top = (h - ((lastVisiblePrice - minP) / range) * h - 10) + 'px'; 
-        tag.innerText = lastVisiblePrice.toFixed(coinName==='BTC'?1:4);
+        tag.style.top = (h - ((lastP - minP) / range) * h - 10) + 'px'; tag.innerText = lastP.toFixed(coinName==='BTC'?1:4);
     }
 
     function action(type) {
         document.getElementById('btn-next').classList.remove('btn-flash'); 
-        
         const price = marketData[currentStep-1].close;
-        const pct = parseInt(document.getElementById('buyAmountSlider').value) / 100;
-        const margin = balance * pct;
-
-        if (type === 'long') {
-            if (margin >= 0.1) {
-                const size = (margin * leverage) / price;
-                longCost = ((longCost * longPos) + (price * size)) / (longPos + size);
-                longPos += size; balance -= margin; longMargin += margin; playSound('long');
-            } else { showMsg("餘額不足"); return; }
-        } else if (type === 'short') {
-            if (margin >= 0.1) {
-                const size = (margin * leverage) / price;
-                shortCost = ((shortCost * shortPos) + (price * size)) / (shortPos + size);
-                shortPos += size; balance -= margin; shortMargin += margin; playSound('short');
-            } else { showMsg("餘額不足"); return; }
+        const margin = balance * (parseInt(document.getElementById('buyAmountSlider').value) / 100);
+        if (type === 'long' || type === 'short') {
+            if (margin < 0.1) { showMsg("餘額不足"); return; }
+            const size = (margin * leverage) / price;
+            if (type === 'long') { longCost = ((longCost * longPos) + (price * size)) / (longPos + size); longPos += size; longMargin += margin; playSound('long'); }
+            else { shortCost = ((shortCost * shortPos) + (price * size)) / (shortPos + size); shortPos += size; shortMargin += margin; playSound('short'); }
+            balance -= margin;
         } else if (type === 'closeAll') {
             if (longPos > 0 || shortPos > 0) {
-                const lPnl = longPos > 0 ? (price - longCost) * longPos : 0;
-                const sPnl = shortPos > 0 ? (shortCost - price) * shortPos : 0;
-                
-                if (isEasyMode && (lPnl + sPnl) < 0 && !hasLostInEasy) {
-                    showMsg("新手建議見好就收，留得青山在！", 2500);
-                    hasLostInEasy = true;
-                } else {
-                    playSound('close');
-                }
-
-                balance += (longMargin + lPnl + shortMargin + sPnl);
-                longPos = 0; longMargin = 0; longCost = 0;
-                shortPos = 0; shortMargin = 0; shortCost = 0;
+                const lp = (price - longCost) * longPos, sp = (shortCost - price) * shortPos;
+                if (isEasyMode && (lp + sp) < 0 && !hasLostInEasy) { showMsg("建議見好就收！", 2500); hasLostInEasy = true; } 
+                else { playSound('close'); }
+                balance += (longMargin + lp + shortMargin + sp);
+                longPos = 0; longMargin = 0; longCost = 0; shortPos = 0; shortMargin = 0; shortCost = 0;
             } else { showMsg("手上沒單"); return; }
         }
-        
-        if(type === 'wait' || type === 'closeAll' && (longPos===0 && shortPos===0)) {
-            currentStep++; 
-            if(panOffset > 0) panOffset++; 
-        }
+        if(type === 'wait' || (type === 'closeAll' && longPos===0 && shortPos===0)) currentStep++;
         checkStatus();
     }
 
     function checkStatus() {
-        const price = marketData[currentStep-1].close;
-        const lPnl = longPos > 0 ? (price - longCost) * longPos : 0;
-        const sPnl = shortPos > 0 ? (shortCost - price) * shortPos : 0;
-        const equity = balance + longMargin + lPnl + shortMargin + sPnl;
-        const now = Date.now();
-
+        const price = marketData[currentStep-1].close, lp = longPos > 0 ? (price - longCost) * longPos : 0, sp = shortPos > 0 ? (shortCost - price) * shortPos : 0;
+        const equity = balance + longMargin + lp + shortMargin + sp, now = Date.now();
         if (window.newsAlerts[currentStep]) {
-            const abox = document.getElementById('alert-box');
-            abox.innerText = "📰 " + window.newsAlerts[currentStep];
-            abox.style.background = "rgba(240, 185, 11, 0.95)";
-            abox.style.color = "black";
-            abox.style.display = 'block';
-            bgmAudio.playbackRate = 1.1; 
-            setTimeout(() => { if(abox.innerText.includes("📰")) abox.style.display = 'none'; }, 3500);
+            const ab = document.getElementById('alert-box'); ab.innerText = "📰 " + window.newsAlerts[currentStep]; ab.style.background = "rgba(240, 185, 11, 0.95)"; ab.style.color = "black"; ab.style.display = 'block';
+            bgmAudio.playbackRate = 1.1; setTimeout(() => { if(ab.innerText.includes("📰")) ab.style.display = 'none'; }, 3500);
         }
-
-        if (currentStep === ALERT_STEP) {
-            const abox = document.getElementById('alert-box');
-            abox.innerText = "⚠️ 倒數 15 根 K 線！";
-            abox.style.background = "rgba(255, 59, 48, 0.95)";
-            abox.style.color = "white";
-            abox.style.display = 'block';
-            bgmAudio.playbackRate = 1.35; 
-        }
-
-        const equityChange = (equity - lastEquity) / initCapital;
+        if (currentStep === ALERT_STEP) { const ab = document.getElementById('alert-box'); ab.innerText = "⚠️ 倒數 15 根 K 線！"; ab.style.background = "rgba(255, 59, 48, 0.95)"; ab.style.color = "white"; ab.style.display = 'block'; bgmAudio.playbackRate = 1.35; }
+        const eqChange = (equity - lastEquity) / initCapital;
         if (now - lastJumpTime > 4000) {
-            if (equityChange > 0.15) { bgmAudio.currentTime = 29.5; showMsg("🚀 爽翻天！"); lastJumpTime = now; } 
-            else if (equityChange < -0.15) { bgmAudio.currentTime = 38.75; showMsg("💀 要被抬走了！"); lastJumpTime = now; }
+            if (eqChange > 0.15) { bgmAudio.currentTime = 29.5; showMsg("🚀 爽翻天！"); lastJumpTime = now; } 
+            else if (eqChange < -0.15) { bgmAudio.currentTime = 38.75; showMsg("💀 要被抬走了！"); lastJumpTime = now; }
         }
         lastEquity = equity;
-
-        if (equity <= 0) { 
-            draw(); updateUI(); playSound('liq'); 
-            endGame(true, equity); 
-            return; 
-        }
-        if (currentStep >= TOTAL_STEPS + 10) { 
-            if (longPos > 0 || shortPos > 0) balance = equity; 
-            endGame(false, balance); 
-        }
+        if (equity <= 0) { draw(); updateUI(); playSound('liq'); endGame(true, equity); return; }
+        if (currentStep >= TOTAL_STEPS + 10) { if (longPos > 0 || shortPos > 0) balance = equity; endGame(false, balance); }
         else { draw(); updateUI(); }
     }
 
     function updateUI() {
-        const price = marketData[currentStep-1].close;
-        const lPnl = longPos > 0 ? (price - longCost) * longPos : 0;
-        const sPnl = shortPos > 0 ? (shortCost - price) * shortPos : 0;
-        const totalPnl = lPnl + sPnl;
-        const equity = balance + longMargin + lPnl + shortMargin + sPnl;
-        
+        const p = marketData[currentStep-1].close, lp = longPos > 0 ? (p - longCost) * longPos : 0, sp = shortPos > 0 ? (shortCost - p) * shortPos : 0, tp = lp + sp, eq = balance + longMargin + lp + shortMargin + sp;
         document.getElementById('balance').innerText = balance.toFixed(2);
         document.getElementById('long-pos').innerText = longPos.toFixed(coinName==='BTC'?4:0);
         document.getElementById('short-pos').innerText = shortPos.toFixed(coinName==='BTC'?4:0);
-        document.getElementById('total-equity').innerText = equity.toFixed(2);
-        
-        const pEl = document.getElementById('unrealized-pnl'); 
-        pEl.innerText = (totalPnl >= 0 ? '+' : '') + totalPnl.toFixed(2); 
-        pEl.style.color = totalPnl >= 0 ? 'var(--up-color)' : 'var(--down-color)';
-        
+        document.getElementById('total-equity').innerText = eq.toFixed(2);
+        const pEl = document.getElementById('unrealized-pnl'); pEl.innerText = (tp >= 0 ? '+' : '') + tp.toFixed(2); pEl.style.color = tp >= 0 ? 'var(--up-color)' : 'var(--down-color)';
         document.getElementById('sellBtn').disabled = (longPos <= 0 && shortPos <= 0);
     }
 
-    function showMsg(t, duration = 1200) { 
-        const b = document.getElementById('msg-box'); b.innerText = t; b.style.display = 'block'; 
-        setTimeout(() => b.style.display = 'none', duration); 
-    }
+    function showMsg(t, d = 1200) { const b = document.getElementById('msg-box'); b.innerText = t; b.style.display = 'block'; setTimeout(() => b.style.display = 'none', d); }
 
     function endGame(isLiq, finalEquity) {
         document.getElementById('overlay').style.display = 'flex';
         document.getElementById('alert-box').style.display = 'none';
-        
         currentUserRoi = ((finalEquity - initCapital) / initCapital) * 100;
-        
-        const startPrice = marketData[9].open; 
-        const finalPrice = marketData[currentStep-1].close;
-        const marketRoi = ((finalPrice - startPrice) / startPrice) * 100 * leverage; 
-        const alpha = currentUserRoi - marketRoi;
 
-        let rank = "", sub = "", color = "";
-        
-        if (isLiq || currentUserRoi <= -90) { 
-            rank = "RANK: F"; 
-            sub = `☠️ 槓桿拉滿，直接抬走！連渣都不剩，甚至還倒欠莊家 ${Math.abs(finalEquity).toFixed(2)} U。天台的風很大，記得穿件厚外套。`; 
-            color = "var(--down-color)"; 
-        } else if (currentUserRoi < 0) { 
-            if (alpha > 20 && allowShort) { 
-                rank = "RANK: C+"; 
-                sub = "📉 大盤跌成狗，雖然你也虧了，但你成功跑贏了市場！在幣圈，少虧就是賺，雖敗猶榮！"; 
-                color = "#ff9500"; 
-            } else { 
-                rank = "RANK: D"; 
-                sub = "🧼 你的本金已經變成主力車庫裡的法拉利了。洗洗睡吧，明天還要早起去火鍋店跟燒烤店打工端盤子，空檔還得狂做資料輸入來還債呢。"; 
-                color = "var(--down-color)"; 
+        // 【新增音效邏輯】：最後一根 K 線結束，根據盈虧播 2 秒大漲/大跌音樂後關掉
+        if (!isMuted) {
+            bgmAudio.pause(); // 先暫停原本的播放
+            if (currentUserRoi > 0) {
+                bgmAudio.currentTime = 29.5; // 大漲音樂點
+            } else {
+                bgmAudio.currentTime = 38.75; // 大跌音樂點
             }
-        } else {
-            if (alpha < 0) { 
-                rank = "RANK: B-"; 
-                sub = "🐢 雖然賺了，但一波操作猛如虎，一看收益二百五。瞎忙一場，不如一開始就滿倉去睡覺！"; 
-                color = "#34c759"; 
-            } else if (alpha > 50) { 
-                rank = "RANK: SSS"; 
-                sub = "🔥 多空雙殺！主力都快被你玩破產了，華爾街明天就發聘書給你！"; 
-                color = "var(--accent)"; 
-            } else { 
-                rank = "RANK: A"; 
-                sub = "📈 穩穩的幸福！成功擊敗大盤，今天晚餐可以幫自己加個大雞腿了。"; 
-                color = "var(--up-color)"; 
-            }
+            bgmAudio.play().catch(e => {});
+            setTimeout(() => {
+                bgmAudio.pause(); // 2秒後關閉，直到下一把開始
+            }, 2000);
         }
 
-        document.getElementById('rank-title').innerText = rank;
-        document.getElementById('rank-title').style.color = color;
-        document.getElementById('rank-subtitle').innerText = sub;
-        document.getElementById('rank-subtitle').style.color = color;
-        
-        document.getElementById('res-alpha').innerText = (alpha > 0 ? "+" : "") + alpha.toFixed(2) + "%";
-        document.getElementById('res-alpha').style.color = alpha >= 0 ? "var(--up-color)" : "var(--down-color)";
-        document.getElementById('res-mkt').innerText = (marketRoi > 0 ? "+" : "") + marketRoi.toFixed(2) + "%";
-        document.getElementById('res-roi').innerText = (currentUserRoi > 0 ? "+" : "") + currentUserRoi.toFixed(2) + "%";
-        document.getElementById('res-roi').style.color = currentUserRoi >= 0 ? "var(--up-color)" : "var(--down-color)";
+        const alpha = currentUserRoi - (((marketData[currentStep-1].close - marketData[9].open) / marketData[9].open) * 100 * leverage);
+        let rank = "", sub = "", color = "";
+        if (isLiq || currentUserRoi <= -90) { rank = "RANK: F"; sub = `☠️ 槓桿拉滿，直接抬走！連渣都不剩，甚至倒欠 ${Math.abs(finalEquity).toFixed(2)} U。天台的風很大...`; color = "var(--down-color)"; } 
+        else if (currentUserRoi < 0) {
+            if (alpha > 20 && allowShort) { rank = "RANK: C+"; sub = "📉 大盤跌成狗，但你成功跑贏了市場！雖敗猶榮！"; color = "#ff9500"; }
+            else { rank = "RANK: D"; sub = "🧼 你的本金已變成主力的法拉利了。明天早起去打工吧..."; color = "var(--down-color)"; }
+        } else {
+            if (alpha < 0) { rank = "RANK: B-"; sub = "🐢 雖然賺了，但瞎忙一場，不如一開始就滿倉睡覺！"; color = "#34c759"; }
+            else if (alpha > 50) { rank = "RANK: SSS"; sub = "🔥 多空雙殺！華爾街明天就發聘書給你！"; color = "var(--accent)"; }
+            else { rank = "RANK: A"; sub = "📈 穩穩的幸福！成功擊敗大盤，晚餐加個大雞腿。"; color = "var(--up-color)"; }
+        }
+        document.getElementById('rank-title').innerText = rank; document.getElementById('rank-title').style.color = color;
+        document.getElementById('rank-subtitle').innerText = sub; document.getElementById('rank-subtitle').style.color = color;
+        document.getElementById('res-alpha').innerText = (alpha > 0 ? "+" : "") + alpha.toFixed(2) + "%"; document.getElementById('res-alpha').style.color = alpha >= 0 ? "var(--up-color)" : "var(--down-color)";
+        document.getElementById('res-mkt').innerText = (currentUserRoi - alpha).toFixed(2) + "%";
+        document.getElementById('res-roi').innerText = (currentUserRoi > 0 ? "+" : "") + currentUserRoi.toFixed(2) + "%"; document.getElementById('res-roi').style.color = currentUserRoi >= 0 ? "var(--up-color)" : "var(--down-color)";
 
-        // 如果想設定更多惡魔的低語可以加在這裡
-        const devilQuotes = [
-            "膽子大一點，100 倍槓桿別猶豫！贏了會所嫩模，輸了下海幹活。",
-            "才賺這點？高槓桿才是暴富的唯一真理，下次拉滿吧！",
-            "真正的勇士，都是帶著 50 倍槓桿睡覺的。",
-            "怕爆倉就不要玩合約，下次把槓桿拉到最右邊試試？",
-            "別人恐懼我貪婪，別人小虧我破產",
-            "人生沒有重來，但槓桿可以重開。100倍，懂？"
-        ];
-        const devilQuote = devilQuotes[Math.floor(Math.random() * devilQuotes.length)];
-        document.getElementById('devil-text').innerText = `"${devilQuote}"`;
-
-        const saveBtn = document.getElementById('save-lb-btn');
-        saveBtn.innerText = "💾 記在排行榜";
-        saveBtn.disabled = false;
-        saveBtn.style.opacity = "1";
+        const quotes = ["膽子大一點，100 倍槓桿別猶豫！", "才賺這點？高槓桿才是暴富真理！", "真正的勇士，帶著 50 倍槓桿睡覺。", "怕爆倉就不要玩合約，下次拉滿？", "別人恐懼我貪婪，別人小虧我破產。"];
+        document.getElementById('devil-text').innerText = `"${quotes[Math.floor(Math.random()*quotes.length)]}"`;
+        const saveBtn = document.getElementById('save-lb-btn'); saveBtn.innerText = "💾 記在排行榜"; saveBtn.disabled = false; saveBtn.style.opacity = "1";
     }
 
     function saveToLeaderboard() {
         realLeaderboard.push({ name: playerName, coin: coinName, roi: currentUserRoi });
-        realLeaderboard.sort((a, b) => b.roi - a.roi); 
-        realLeaderboard = realLeaderboard.slice(0, 10); 
+        realLeaderboard.sort((a, b) => b.roi - a.roi); realLeaderboard = realLeaderboard.slice(0, 10);
         localStorage.setItem('realCryptoLb', JSON.stringify(realLeaderboard));
-
-        const saveBtn = document.getElementById('save-lb-btn');
-        saveBtn.innerText = "✅ 已加入榜單";
-        saveBtn.disabled = true;
-        saveBtn.style.opacity = "0.5";
-
+        const sb = document.getElementById('save-lb-btn'); sb.innerText = "✅ 已加入榜單"; sb.disabled = true; sb.style.opacity = "0.5";
         openLeaderboard();
     }
 
     function openLeaderboard() {
-        const content = document.getElementById('lb-content');
-        content.innerHTML = "";
-        
-        if (realLeaderboard.length === 0) {
-            content.innerHTML = "<div style='text-align:center; padding: 20px; color: var(--text-dim);'>目前還沒有人上榜喔！</div>";
-        } else {
-            realLeaderboard.forEach((player, index) => {
-                const row = document.createElement('div');
-                row.className = 'lb-row';
-                if (player.name === playerName && player.coin === coinName && player.roi === currentUserRoi) {
-                    row.style.color = 'var(--accent)';
-                    row.style.fontWeight = 'bold';
-                }
-                let medal = index === 0 ? "🥇" : (index === 1 ? "🥈" : (index === 2 ? "🥉" : `#${index+1}`));
-                row.innerHTML = `<span>${medal}</span><span style="overflow: hidden; text-overflow: ellipsis; white-space: nowrap;">${player.name} <span style="font-size:10px; color:#888;">(${player.coin})</span></span><span style="color:${player.roi >= 0 ? 'var(--up-color)' : 'var(--down-color)'}">${(player.roi > 0 ? "+" : "") + player.roi.toFixed(1)}%</span>`;
-                content.appendChild(row);
-            });
-        }
+        const c = document.getElementById('lb-content'); c.innerHTML = "";
+        if (realLeaderboard.length === 0) c.innerHTML = "<div style='text-align:center; padding: 20px; color: var(--text-dim);'>目前還沒有人上榜喔！</div>";
+        else realLeaderboard.forEach((p, i) => {
+            const row = document.createElement('div'); row.className = 'lb-row'; if (p.name === playerName && p.roi === currentUserRoi) { row.style.color = 'var(--accent)'; row.style.fontWeight = 'bold'; }
+            row.innerHTML = `<span>${i < 3 ? ['🥇','🥈','🥉'][i] : '#'+(i+1)}</span><span>${p.name} <small>(${p.coin})</small></span><span style="color:${p.roi >= 0 ? 'var(--up-color)' : 'var(--down-color)'}">${(p.roi > 0 ? "+" : "") + p.roi.toFixed(1)}%</span>`;
+            c.appendChild(row);
+        });
         document.getElementById('lb-modal').style.display = 'flex';
     }
 
     function closeLeaderboard() { document.getElementById('lb-modal').style.display = 'none'; }
-
-    document.addEventListener("visibilitychange", () => {
-        if (document.hidden) { bgmAudio.pause(); } 
-        else if (!isMuted && document.getElementById('start-screen').style.display === 'none' && document.getElementById('overlay').style.display === 'none') {
-            bgmAudio.play().catch(e => {});
-        }
-    });
-
     window.onload = () => { rollName(); setTimeout(resizeCanvas, 100); };
 </script>
 </body>
