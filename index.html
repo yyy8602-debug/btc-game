@@ -85,8 +85,8 @@
         .lb-row span:last-child { font-weight: bold; text-align: right; }
         .lb-header { font-weight: bold; color: var(--text-dim); font-size: 11px; border-bottom: 2px solid #333; padding-bottom: 5px; }
 
-        #rank-title { font-size: 26px !important; }
-        #rank-subtitle { font-size: 12px !important; }
+        #rank-title { font-size: 28px !important; text-shadow: 2px 2px 4px #000; }
+        #rank-subtitle { font-size: 13px !important; text-shadow: 1px 1px 3px #000; }
         
         #enter-market-btn { background: var(--up-color); color: white; width: 100%; max-width: 200px; padding: 12px; border-radius: 8px; font-size: 14px; margin: 15px auto 0 auto; display: block; box-shadow: 0 4px 10px rgba(0, 192, 135, 0.4); }
 
@@ -127,7 +127,7 @@
     <div class="controls">
         <div class="slider-container"><span class="label">保證金投入(%):</span><input type="range" id="buyAmountSlider" min="10" max="100" step="10" value="50" oninput="updateSliderLabel(this.value)"><span id="sliderLabel" class="value">50%</span></div>
         <div class="btn-group" id="main-btn-group">
-            <button class="btn-long" onclick="action('long')">做多</button>
+            <button class="btn-long" id="btn-long-action" onclick="action('long')">做多</button>
             <button class="btn-short" id="btn-short-action" onclick="action('short')">做空</button>
             <button class="btn-closeAll" id="sellBtn" onclick="action('closeAll')" disabled>全平</button>
             <button class="btn-wait" id="btn-next" onclick="action('wait')">下一根</button>
@@ -140,7 +140,7 @@
         <div class="intro-box">
             <p>👉 選擇 <span>【簡易上手】</span>：<br>適合新手。系統鎖定 3倍槓桿、只能買漲，體驗最純粹的看盤快感。</p>
             <hr style="border:0; border-top:1px solid #444; margin: 8px 0;">
-            <p>👉 選擇 <span>【進階合約】</span>：<br>適合老韭菜。百倍槓桿、多空雙殺、自訂本金，生死有命富貴在天。</p>
+            <p>👉 選擇 <span>【進階合約】</span>：<br>適合老韭菜。百倍槓桿、自訂本金，生死有命富貴在天。</p>
             <p style="color:var(--down-color); margin-top: 6px; font-size: 10px;">🚨 提示：突發新聞可能是「主力騙局（利多出盡）」，請小心！</p>
         </div>
 
@@ -184,15 +184,15 @@
         </div>
     </div>
 
-    <div id="overlay" class="fullscreen-overlay" style="display: none; background: rgba(0,0,0,0.95);">
+    <div id="overlay" class="fullscreen-overlay" style="display: none; background: rgba(0,0,0,0.4);">
         <div style="width: 100%; max-width: 300px; text-align: right; margin-bottom: 5px;">
-            <button onclick="hideEndOverlay()" style="background: transparent; border: 1px solid #555; color: #aaa; padding: 4px 10px; border-radius: 4px; font-size: 11px;">👀 縮小面板回顧線圖</button>
+            <button onclick="hideEndOverlay()" style="background: rgba(0,0,0,0.6); border: 1px solid #555; color: #aaa; padding: 4px 10px; border-radius: 4px; font-size: 11px;">👀 縮小面板回顧線圖</button>
         </div>
         
-        <h2 id="rank-title" style="font-size: 32px; margin: 0;"></h2>
-        <div id="rank-subtitle" style="font-size: 13px; margin-bottom: 15px; font-weight: bold; line-height: 1.4;"></div>
+        <h2 id="rank-title" style="margin: 0;"></h2>
+        <div id="rank-subtitle"></div>
         
-        <div style="background: var(--card-bg); padding: 15px; border-radius: 10px; text-align: left; width: 100%; max-width: 300px; margin-bottom: 15px;">
+        <div style="background: var(--card-bg); padding: 15px; border-radius: 10px; text-align: left; width: 100%; max-width: 300px; margin-bottom: 15px; box-shadow: 0 4px 15px rgba(0,0,0,0.5);">
             <p style="margin: 4px 0; font-size: 13px; color:var(--text-dim);">操作次數: <span id="res-trades" style="float: right; color:white;"></span></p>
             <p style="margin: 4px 0; font-size: 13px; color:var(--text-dim);">最長抱單: <span id="res-hold" style="float: right; color:white;"></span></p>
             <hr style="border-color: #333; margin: 8px 0;">
@@ -200,12 +200,12 @@
         </div>
 
         <div style="display: flex; gap: 10px; width: 100%; max-width: 300px; margin-bottom: 10px;">
-            <button id="save-lb-btn" onclick="saveToLeaderboard()" style="background: #ff9500; color: white; flex: 1; margin:0;">💾 記在排行榜</button>
-            <button onclick="openLeaderboard()" style="background: #333; border: 1px solid var(--accent); color: white; flex: 1; margin:0;">🏆 英雄榜</button>
+            <button id="save-lb-btn" onclick="saveToLeaderboard()" style="background: #ff9500; color: white; flex: 1; margin:0; box-shadow: 0 2px 8px rgba(0,0,0,0.4);">💾 記在排行榜</button>
+            <button onclick="openLeaderboard()" style="background: #333; border: 1px solid var(--accent); color: white; flex: 1; margin:0; box-shadow: 0 2px 8px rgba(0,0,0,0.4);">🏆 英雄榜</button>
         </div>
 
-        <button onclick="location.reload()" style="background: var(--accent); color: black; width: 100%; max-width: 300px; margin-top: 5px;">再戰一場</button>
-        <div id="devil-text" style="margin-top: 20px; font-size: 12px; color: var(--text-dim); font-style: italic; max-width: 280px;"></div>
+        <button onclick="location.reload()" style="background: var(--accent); color: black; width: 100%; max-width: 300px; margin-top: 5px; box-shadow: 0 2px 8px rgba(0,0,0,0.4);">再戰一場</button>
+        <div id="devil-text" style="margin-top: 20px; font-size: 12px; color: var(--text-dim); font-style: italic; max-width: 280px; text-shadow: 1px 1px 2px #000; background: rgba(0,0,0,0.5); padding: 5px; border-radius: 5px;"></div>
     </div>
 
     <div id="lb-modal">
@@ -233,6 +233,7 @@
     let tradeCount = 0;
     let holdingSteps = 0;
     let maxHoldingSteps = 0;
+    let positionOpenStep = 0; 
 
     let panOffset = 0; 
     let visibleCount = 30;
@@ -247,7 +248,7 @@
     const TOTAL_STEPS = 60; 
     const ALERT_STEP = 55; 
 
-    const funnyNames = ["百倍槓桿猴", "天台吹風客", "插針受害者", "做空大師", "爆倉藝術家", "合約戰神", "保證金不足", "拔網線死忠粉", "吃融資費率度日", "扛單死不平", "多空雙殺", "止損是懦夫", "借錢抄底", "全倉逐倉分不清", "資金費率小偷", "爆倉信件收集者", "被強平的男人", "永遠做反向", "看線圖發電", "K線圖畢卡索", "只賺個便當錢"];
+    const funnyNames = ["百倍槓桿猴", "天台吹風客", "插針受害者", "做空大師", "爆倉藝術家", "合約戰神", "保證金不足", "拔網線死忠粉", "吃融資費率度日", "扛單死不平", "單邊做死", "止損是懦夫", "借錢抄底", "全倉逐倉分不清", "資金費率小偷", "爆倉信件收集者", "被強平的男人", "永遠做反向", "看線圖發電", "K線圖畢卡索", "只賺個便當錢"];
 
     function rollName() { document.getElementById('playerName').value = funnyNames[Math.floor(Math.random() * funnyNames.length)]; }
     function showAdvancedSettings() { document.getElementById('initial-buttons').style.display = 'none'; document.getElementById('advanced-settings').style.display = 'block'; }
@@ -351,7 +352,8 @@
         
         balance = initCapital; currentStep = 10;
         longPos = 0; longMargin = 0; longCost = 0; shortPos = 0; shortMargin = 0; shortCost = 0;
-        tradeCount = 0; holdingSteps = 0; maxHoldingSteps = 0;
+        tradeCount = 0; holdingSteps = 0; maxHoldingSteps = 0; lastEquity = initCapital;
+        positionOpenStep = 0; 
         hasLostInEasy = false; panOffset = 0; visibleCount = 30;
         
         document.getElementById('inGameLev').innerText = leverage; document.getElementById('alert-box').style.display = 'none'; document.getElementById('restore-overlay-btn').style.display = 'none'; 
@@ -422,6 +424,8 @@
         
         if (type === 'long' || type === 'short') {
             if (margin < 0.1) { showMsg("餘額不足"); return; }
+            if (longPos === 0 && shortPos === 0) { positionOpenStep = currentStep; }
+            
             const size = (margin * leverage) / price;
             if (type === 'long') { longCost = ((longCost * longPos) + (price * size)) / (longPos + size); longPos += size; longMargin += margin; playSound('long'); }
             else { shortCost = ((shortCost * shortPos) + (price * size)) / (shortPos + size); shortPos += size; shortMargin += margin; playSound('short'); }
@@ -450,14 +454,19 @@
         }
         if (currentStep === ALERT_STEP) { const ab = document.getElementById('alert-box'); ab.innerText = "⚠️ 倒數 15 根 K 線！"; ab.style.background = "rgba(255, 59, 48, 0.95)"; ab.style.color = "white"; ab.style.display = 'block'; bgmAudio.playbackRate = 1.35; }
         
-        const eqDelta = equity - lastEquity; const eqDeltaPct = Math.abs(eqDelta) / initCapital; let triggerMusic = "";
-        
-        if (lastEquity > initCapital * 1.1 && equity < initCapital) { triggerMusic = "hell"; showMsg("💀 暴富變破產！"); }
-        else if (lastEquity < initCapital * 0.9 && equity > initCapital) { triggerMusic = "heaven"; showMsg("🚀 奇蹟生還！"); }
-        else if (eqDeltaPct > 0.15) { if (eqDelta > 0) { triggerMusic = "heaven"; showMsg("🚀 一柱擎天！"); } else { triggerMusic = "hell"; showMsg("💀 核彈瀑布！"); } }
+        let triggerMusic = "";
+        if (currentStep > 1) {
+            const prevPrice = marketData[currentStep-2].close;
+            const priceChange = (price - prevPrice) / prevPrice;
+            const threshold = coinName === 'BTC' ? 0.04 : 0.08; 
+
+            if (priceChange >= threshold) { triggerMusic = "heaven"; showMsg("🚀 大爆漲！"); } 
+            else if (priceChange <= -threshold) { triggerMusic = "hell"; showMsg("💀 大瀑布！"); }
+        }
 
         if (triggerMusic !== "" && now - lastJumpTime > 5000) {
-            if (triggerMusic === "heaven") bgmAudio.currentTime = 29.5; else bgmAudio.currentTime = 38.75; 
+            if (triggerMusic === "heaven") bgmAudio.currentTime = 29.5; 
+            else bgmAudio.currentTime = 38.75; 
             lastJumpTime = now;
         }
         
@@ -471,6 +480,9 @@
         const p = marketData[currentStep-1].close, lp = longPos > 0 ? (p - longCost) * longPos : 0, sp = shortPos > 0 ? (shortCost - p) * shortPos : 0, tp = lp + sp, eq = balance + longMargin + lp + shortMargin + sp;
         document.getElementById('balance').innerText = balance.toFixed(2); document.getElementById('long-pos').innerText = longPos.toFixed(coinName==='BTC'?4:0); document.getElementById('short-pos').innerText = shortPos.toFixed(coinName==='BTC'?4:0); document.getElementById('total-equity').innerText = eq.toFixed(2);
         const pEl = document.getElementById('unrealized-pnl'); pEl.innerText = (tp >= 0 ? '+' : '') + tp.toFixed(2); pEl.style.color = tp >= 0 ? 'var(--up-color)' : 'var(--down-color)';
+        
+        document.getElementById('btn-long-action').disabled = (shortPos > 0);
+        document.getElementById('btn-short-action').disabled = (longPos > 0);
         document.getElementById('sellBtn').disabled = (longPos <= 0 && shortPos <= 0);
     }
 
@@ -486,16 +498,29 @@
             bgmAudio.play().catch(e => {}); setTimeout(() => { bgmAudio.pause(); }, 2000);
         }
 
+        // 【極限挑戰：動態槓桿評分權重 X 5倍】
+        let targetSSS = leverage * 100;  // 100倍槓桿要求 +10000%
+        let targetSS  = leverage * 50;   // 100倍槓桿要求 +5000%
+        let targetS   = leverage * 20;   // 100倍槓桿要求 +2000%
+        let targetAPlus = leverage * 5;  // 100倍槓桿要求 +500%
+
         let rank = "", sub = "", color = "";
         
-        if (tradeCount <= 1) {
+        if (tradeCount <= 1 && !isLiq && currentUserRoi > -90) {
             rank = "RANK: E";
             sub = "💤 觀望大師？一頓操作猛如虎，一看次數只有一。你把合約當作定存買嗎？連手續費都不夠付！";
             color = "var(--text-dim)";
         } else if (isLiq || currentUserRoi <= -90) { 
-            rank = "RANK: F"; 
-            sub = `☠️ 槓桿拉滿，直接抬走！連渣都不剩，甚至倒欠 ${Math.abs(finalEquity).toFixed(2)} U。天台的風很大...`; 
-            color = "var(--down-color)"; 
+            let survivedSteps = currentStep - positionOpenStep;
+            if (positionOpenStep > 0 && survivedSteps < 5) {
+                rank = "RANK: G"; 
+                sub = `⚡ 光速白給！開倉撐不到 5 根 K 線就灰飛煙滅。你的保證金是大風刮來的嗎？主力最愛你這種送財童子！`;
+                color = "#ff2d55"; 
+            } else {
+                rank = "RANK: F"; 
+                sub = `☠️ 槓桿拉滿，直接抬走！連渣都不剩，甚至倒欠 ${Math.abs(finalEquity).toFixed(2)} U。天台的風很大...`; 
+                color = "var(--down-color)"; 
+            }
         } else if (currentUserRoi < 0) {
             if (currentUserRoi > -30 && tradeCount >= 5) { 
                 rank = "RANK: C+"; sub = "✂️ 瘋狂刷單結果還是虧！但至少你懂得及時停損，沒把底褲賠光，算你命大。"; color = "#ff9500"; 
@@ -503,19 +528,20 @@
                 rank = "RANK: D"; sub = "🧼 你的本金已經變成主力車庫裡的法拉利了。乖乖去打工還債吧。"; color = "var(--down-color)"; 
             }
         } else {
-            if (currentUserRoi < 20 && tradeCount > 8) { 
+            if (currentUserRoi < (leverage * 0.2) && tradeCount > 8) { 
                 rank = "RANK: B-"; sub = "🐢 瘋狂殺進殺出，結果只賺個便當錢？瞎折騰一場，根本是給交易所打工！"; color = "#34c759"; 
-            } else if (currentUserRoi >= 500) { 
+            } else if (currentUserRoi >= targetSSS) { 
                 rank = "RANK: SSS"; 
-                if (maxHoldingSteps >= 20) sub = "🔥 天選交易神！翻了五倍以上！死拿大師看準趨勢死抱不放，華爾街連夜搭專機來拜師！";
-                else sub = "🔥 天選交易神！翻了五倍以上！高頻神童精準踏在每個波段，主力直接被你玩破產！";
+                let multi = (targetSSS/100) + 1;
+                if (maxHoldingSteps >= 20) sub = `🔥 天選交易神！本金翻了 ${multi} 倍以上！死拿大師看準趨勢死抱不放，華爾街連夜搭專機來拜師！`;
+                else sub = `🔥 天選交易神！本金翻了 ${multi} 倍以上！高頻神童精準踏在每個波段，主力直接被你玩破產！`;
                 color = "var(--accent)"; 
-            } else if (currentUserRoi >= 300) {
-                rank = "RANK: SS"; sub = "🚀 無情收割機！暴賺三百趴！這根本不是在交易，你是在明目張膽地搶劫交易所！"; color = "#ff2d55";
-            } else if (currentUserRoi >= 100) {
-                rank = "RANK: S"; sub = "🎰 合約印鈔機！本金直接翻倍！你的滑鼠是金子做的吧？今晚直接包場慶祝！"; color = "#ff9500";
-            } else if (currentUserRoi >= 50) {
-                rank = "RANK: A+"; sub = "🥂 華爾街預備軍！獲利突破 50%！這個績效已經屌打一票死薪水了，繼續保持！"; color = "#32ade6";
+            } else if (currentUserRoi >= targetSS) {
+                rank = "RANK: SS"; sub = `🚀 無情收割機！暴賺 ${targetSS}%！這根本不是在交易，你是在明目張膽地搶劫交易所！`; color = "#ff2d55";
+            } else if (currentUserRoi >= targetS) {
+                rank = "RANK: S"; sub = `🎰 合約印鈔機！獲利高達 ${targetS}%！你的滑鼠是金子做的吧？今晚直接包場慶祝！`; color = "#ff9500";
+            } else if (currentUserRoi >= targetAPlus) {
+                rank = "RANK: A+"; sub = `🥂 華爾街預備軍！獲利突破 ${targetAPlus}%！這個績效已經屌打一票死薪水了，繼續保持！`; color = "#32ade6";
             } else { 
                 rank = "RANK: A"; sub = "📈 穩穩的幸福！懂得見好就收，今天晚餐可以幫自己加個大雞腿了。"; color = "var(--up-color)"; 
             }
