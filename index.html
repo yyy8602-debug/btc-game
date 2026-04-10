@@ -12,7 +12,6 @@
         * { box-sizing: border-box; -webkit-tap-highlight-color: transparent; outline: none; touch-action: manipulation; -webkit-user-select: none; user-select: none; }
         html, body { margin: 0; padding: 0; position: absolute; top: 0; left: 0; right: 0; bottom: 0; overflow: hidden; background-color: var(--bg-color); color: var(--text-main); font-family: "Courier New", Courier, monospace, sans-serif; display: flex; flex-direction: column; }
 
-        /* 修復重疊 Bug：新增 padding-right 避開右上角按鈕 */
         .dashboard { background: var(--card-bg); padding: 10px 100px 10px 15px; display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 8px 12px; border-bottom: 1px solid #333; flex-shrink: 0; align-items: center; position: relative;}
         .stat-box { display: flex; flex-direction: column; }
         .label { font-size: 10px; color: var(--text-dim); font-weight: bold;}
@@ -261,7 +260,8 @@
             s_E: "💤 0 trades? Go open a savings account, boomer. The casino despises you.",
             quotes: ["100x leverage or no balls!", "Is that all? High leverage is the only way!", "Real chads sleep with 50x open.", "Scared of liquidation? Next time go all in.", "Be greedy when others are fearful, get rekt when others take profit."],
             nBull: ["BREAKING: Ceasefire signed!", "BREAKING: Fed emergency rate cut!", "BREAKING: Musk tweets support!", "BREAKING: Apple buys Bitcoin!", "BREAKING: SEC approves all ETFs!"],
-            nBear: ["BREAKING: War declared!", "BREAKING: Fed surprise rate hike!", "BREAKING: Major exchange hacked!", "BREAKING: US Govt dumps BTC!", "BREAKING: Stablecoin depegs!"]
+            nBear: ["BREAKING: War declared!", "BREAKING: Fed surprise rate hike!", "BREAKING: Major exchange hacked!", "BREAKING: US Govt dumps BTC!", "BREAKING: Stablecoin depegs!"],
+            funnyNames: ["100x Ape", "Buy High Sell Low", "Exit Liquidity", "Wendy's Employee", "Liquidated Larry", "FOMO Master", "Pump & Dump Victim", "Rugged Ron", "SBF's Cellmate", "Diamond Hands Dan"]
         },
         tw: {
             bal: "可用餘額(U)", eq: "總資產(U)", pnl: "未實現盈虧", lp: "做多持倉", sp: "做空持倉", retry: "🏳️ 重來",
@@ -293,7 +293,8 @@
             s_E: "💤 觀望大師？一頓操作猛如虎，一看次數只有一。你把合約當作定存買嗎？連手續費都不夠付！",
             quotes: ["膽子大一點，100 倍槓桿別猶豫！", "才賺這點？高槓桿才是暴富真理！", "真正的勇士，帶著 50 倍槓桿睡覺。", "怕爆倉就不要玩合約，下次拉滿？", "別人恐懼我貪婪，別人小虧我破產。"],
             nBull: ["突發：交戰國簽訂停戰協議！", "突發：聯準會緊急降息兩碼！", "突發：馬斯克發推力挺！", "突發：蘋果宣布將比特幣納入公司資產儲備！", "突發：中東土豪國主權基金宣布重倉買入！"],
-            nBear: ["突發：川普向伊朗宣戰！恐慌蔓延！", "突發：聯準會意外升息！", "突發：最大交易所遭駭客攻擊！", "突發：美政府錢包突遭轉出 20 萬枚比特幣砸盤！", "突發：最大穩定幣發行商爆出儲備金挪用醜聞！"]
+            nBear: ["突發：川普向伊朗宣戰！恐慌蔓延！", "突發：聯準會意外升息！", "突發：最大交易所遭駭客攻擊！", "突發：美政府錢包突遭轉出 20 萬枚比特幣砸盤！", "突發：最大穩定幣發行商爆出儲備金挪用醜聞！"],
+            funnyNames: ["百倍槓桿猴", "天台吹風客", "插針受害者", "做空大師", "爆倉藝術家", "資金費率小偷", "拔網線死忠粉", "永遠做反向", "高點接盤俠", "抄底抄到地下室"]
         },
         es: {
             bal: "Balance(U)", eq: "Equidad(U)", pnl: "PNL Irreal", lp: "Pos Larga", sp: "Pos Corta", retry: "🏳️ Reintentar",
@@ -325,7 +326,8 @@
             s_E: "💤 ¿0 trades? Ve a comprar bonos del estado, boomer. El casino te odia.",
             quotes: ["¡100x o nada!", "¿Tan poco? ¡Alto apalancamiento es la ley!", "Los verdaderos Chads duermen con 50x.", "¿Miedo de que te liquiden? Pon todo.", "Codicioso cuando tienen miedo, rekt cuando cobran."],
             nBull: ["¡ÚLTIMA HORA: Alto al fuego!", "¡ÚLTIMA HORA: Recorte de tasas!", "¡ÚLTIMA HORA: Elon Musk apoya!", "¡ÚLTIMA HORA: Apple compra Bitcoin!", "¡ÚLTIMA HORA: SEC aprueba ETFs!"],
-            nBear: ["¡ÚLTIMA HORA: Guerra declarada!", "¡ÚLTIMA HORA: Subida de tasas!", "¡ÚLTIMA HORA: Exchange hackeado!", "¡ÚLTIMA HORA: Gobierno vende BTC!", "¡ÚLTIMA HORA: Stablecoin colapsa!"]
+            nBear: ["¡ÚLTIMA HORA: Guerra declarada!", "¡ÚLTIMA HORA: Subida de tasas!", "¡ÚLTIMA HORA: Exchange hackeado!", "¡ÚLTIMA HORA: Gobierno vende BTC!", "¡ÚLTIMA HORA: Stablecoin colapsa!"],
+            funnyNames: ["Mono 100x", "Comprador de Cimas", "Liquidez de Salida", "Empleado de McDonald's", "Manos de Papel", "Rey del FOMO", "Víctima de Rug Pull", "Atrapado en el Dip", "Creyente del Scam", "Cazador de Velas Rojas"]
         },
         fr: {
             bal: "Solde(U)", eq: "Équité(U)", pnl: "PNL Latent", lp: "Pos Long", sp: "Pos Short", retry: "🏳️ Rejouer",
@@ -357,7 +359,8 @@
             s_E: "💤 0 trade ? Ouvre un Livret A, boomer. Le casino te déteste.",
             quotes: ["100x ou rien !", "C'est tout ? Le levier est la voie !", "Les vrais chads dorment avec x50.", "Peur d'être liquidé ? Fais tapis.", "Avide quand ils ont peur, rekt quand ils encaissent."],
             nBull: ["FLASH: Cessez-le-feu !", "FLASH: Baisse des taux FED !", "FLASH: Musk tweete son soutien !", "FLASH: Apple achète du Bitcoin !", "FLASH: SEC approuve les ETFs !"],
-            nBear: ["FLASH: Guerre déclarée !", "FLASH: Hausse surprise des taux !", "FLASH: Exchange piraté !", "FLASH: Le gouvernement vend du BTC !", "FLASH: Stablecoin s'effondre !"]
+            nBear: ["FLASH: Guerre déclarée !", "FLASH: Hausse surprise des taux !", "FLASH: Exchange piraté !", "FLASH: Le gouvernement vend du BTC !", "FLASH: Stablecoin s'effondre !"],
+            funnyNames: ["Singe 100x", "Acheteur du Top", "Liquidité de Sortie", "Employé de McDo", "Roi du FOMO", "Victime du Rug Pull", "Expert en Plongeon", "Mains de Papier", "Singe Liquidé", "Chasseur de Bougies Rouges"]
         }
     };
 
@@ -372,6 +375,7 @@
             }
         });
         document.getElementById('playerName').placeholder = i18n[lang].nameLbl;
+        rollName(); // 切換語言時，自動重新抽一個專屬的搞笑名字！
     }
 
     const audioCtx = new (window.AudioContext || window.webkitAudioContext)();
@@ -404,9 +408,11 @@
     const TOTAL_STEPS = 60; 
     const ALERT_STEP = 55; 
 
-    const funnyNames = ["百倍槓桿猴", "天台吹風客", "插針受害者", "做空大師", "爆倉藝術家", "合約戰神", "保證金不足", "拔網線死忠粉", "吃融資費率度日", "扛單死不平", "單邊做死", "止損是懦夫", "借錢抄底", "全倉逐倉分不清", "資金費率小偷", "爆倉信件收集者", "被強平的男人", "永遠做反向", "看線圖發電", "K線圖畢卡索", "只賺個便當錢"];
-
-    function rollName() { document.getElementById('playerName').value = funnyNames[Math.floor(Math.random() * funnyNames.length)]; }
+    function rollName() { 
+        const names = i18n[currentLang].funnyNames;
+        document.getElementById('playerName').value = names[Math.floor(Math.random() * names.length)]; 
+    }
+    
     function showAdvancedSettings() { document.getElementById('initial-buttons').style.display = 'none'; document.getElementById('advanced-settings').style.display = 'block'; }
 
     let realLeaderboard = JSON.parse(localStorage.getItem('realCryptoLb')) || [];
@@ -606,7 +612,7 @@
 
         if (window.newsAlerts[currentStep]) {
             const ab = document.getElementById('alert-box'); ab.innerText = "📰 " + window.newsAlerts[currentStep]; ab.style.background = "rgba(240, 185, 11, 0.95)"; ab.style.color = "black"; ab.style.display = 'block';
-            bgmAudio.playbackRate = 1.1; setTimeout(() => { if(ab.innerText.includes("📰") || ab.innerText.includes("BREAKING") || ab.innerText.includes("FLASH")) ab.style.display = 'none'; }, 3500);
+            bgmAudio.playbackRate = 1.1; setTimeout(() => { if(ab.innerText.includes("📰") || ab.innerText.includes("BREAKING") || ab.innerText.includes("FLASH") || ab.innerText.includes("ÚLTIMA HORA")) ab.style.display = 'none'; }, 3500);
         }
         if (currentStep === ALERT_STEP) { const ab = document.getElementById('alert-box'); ab.innerText = i18n[currentLang].alert15; ab.style.background = "rgba(255, 59, 48, 0.95)"; ab.style.color = "white"; ab.style.display = 'block'; bgmAudio.playbackRate = 1.35; }
         
