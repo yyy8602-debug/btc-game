@@ -92,7 +92,6 @@
 
         #restore-overlay-btn { position: absolute; bottom: 20px; right: 20px; background: var(--accent); color: black; font-weight: bold; padding: 10px 15px; border-radius: 20px; font-size: 13px; display: none; z-index: 90; box-shadow: 0 4px 10px rgba(0,0,0,0.5); cursor: pointer; border: 1px solid white;}
 
-        /* 語系選單樣式 */
         #lang-select { position: absolute; top: 15px; right: 15px; background: rgba(30, 35, 41, 0.9); color: var(--text-main); border: 1px solid #555; border-radius: 6px; padding: 6px 12px; font-weight: bold; z-index: 105; outline: none; font-family: inherit; font-size: 12px;}
     </style>
 </head>
@@ -139,7 +138,7 @@
 
     <div id="start-screen" class="fullscreen-overlay">
         <select id="lang-select" onchange="changeLang(this.value)">
-            <option value="en" selected>🇺🇸 English</option>
+            <option value="en">🇺🇸 English</option>
             <option value="tw">🇹🇼 繁體中文</option>
             <option value="es">🇪🇸 Español</option>
             <option value="fr">🇫🇷 Français</option>
@@ -368,6 +367,8 @@
 
     function changeLang(lang) {
         currentLang = lang;
+        localStorage.setItem('degenLang', lang); // 🌟 將語言設定存入本機記憶體
+        
         document.querySelectorAll('[data-i18n]').forEach(el => {
             const key = el.getAttribute('data-i18n');
             if (i18n[lang][key]) {
@@ -747,7 +748,14 @@
     }
 
     function closeLeaderboard() { document.getElementById('lb-modal').style.display = 'none'; }
-    window.onload = () => { changeLang('en'); rollName(); setTimeout(resizeCanvas, 100); };
+    
+    // 🌟 初始化：讀取記憶語言，如果沒有就預設英文
+    window.onload = () => { 
+        let savedLang = localStorage.getItem('degenLang') || 'en';
+        document.getElementById('lang-select').value = savedLang; 
+        changeLang(savedLang); 
+        setTimeout(resizeCanvas, 100); 
+    };
 </script>
 </body>
 </html>
