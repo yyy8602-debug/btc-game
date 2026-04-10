@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>單車摩托爭奪戰</title>
+    <title>Crypto Degen Brawl</title>
     <style>
         :root {
             --up-color: #00c087; --down-color: #ff3b30; --bg-color: #0f141a;
@@ -12,7 +12,8 @@
         * { box-sizing: border-box; -webkit-tap-highlight-color: transparent; outline: none; touch-action: manipulation; -webkit-user-select: none; user-select: none; }
         html, body { margin: 0; padding: 0; position: absolute; top: 0; left: 0; right: 0; bottom: 0; overflow: hidden; background-color: var(--bg-color); color: var(--text-main); font-family: "Courier New", Courier, monospace, sans-serif; display: flex; flex-direction: column; }
 
-        .dashboard { background: var(--card-bg); padding: 10px 15px; display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 8px 12px; border-bottom: 1px solid #333; flex-shrink: 0; align-items: center; position: relative;}
+        /* 修復重疊 Bug：新增 padding-right 避開右上角按鈕 */
+        .dashboard { background: var(--card-bg); padding: 10px 100px 10px 15px; display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 8px 12px; border-bottom: 1px solid #333; flex-shrink: 0; align-items: center; position: relative;}
         .stat-box { display: flex; flex-direction: column; }
         .label { font-size: 10px; color: var(--text-dim); font-weight: bold;}
         .value { font-size: 13px; font-weight: bold; font-variant-numeric: tabular-nums; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
@@ -91,20 +92,23 @@
         #enter-market-btn { background: var(--up-color); color: white; width: 100%; max-width: 200px; padding: 12px; border-radius: 8px; font-size: 14px; margin: 15px auto 0 auto; display: block; box-shadow: 0 4px 10px rgba(0, 192, 135, 0.4); }
 
         #restore-overlay-btn { position: absolute; bottom: 20px; right: 20px; background: var(--accent); color: black; font-weight: bold; padding: 10px 15px; border-radius: 20px; font-size: 13px; display: none; z-index: 90; box-shadow: 0 4px 10px rgba(0,0,0,0.5); cursor: pointer; border: 1px solid white;}
+
+        /* 語系選單樣式 */
+        #lang-select { position: absolute; top: 15px; right: 15px; background: rgba(30, 35, 41, 0.9); color: var(--text-main); border: 1px solid #555; border-radius: 6px; padding: 6px 12px; font-weight: bold; z-index: 105; outline: none; font-family: inherit; font-size: 12px;}
     </style>
 </head>
 <body>
 
     <div class="dashboard">
-        <div class="stat-box"><div class="label">可用餘額(U)</div><div id="balance" class="value">0.00</div></div>
-        <div class="stat-box"><div class="label" style="color:var(--up-color);">做多持倉</div><div id="long-pos" class="value">0.0000</div></div>
-        <div class="stat-box" id="dash-short"><div class="label" style="color:var(--down-color);">做空持倉</div><div id="short-pos" class="value">0.0000</div></div>
-        
-        <div class="stat-box"><div class="label">總資產(U)</div><div id="total-equity" class="value" style="color: var(--accent);">0.00</div></div>
-        <div class="stat-box"><div class="label">未實現盈虧(<span id="inGameLev">1</span>x)</div><div id="unrealized-pnl" class="value">--</div></div>
+        <div class="stat-box"><div class="label" data-i18n="bal">可用餘額(U)</div><div id="balance" class="value">0.00</div></div>
+        <div class="stat-box"><div class="label" data-i18n="eq">總資產(U)</div><div id="total-equity" class="value" style="color: var(--accent);">0.00</div></div>
+        <div class="stat-box"><div class="label"><span data-i18n="pnl">未實現盈虧</span>(<span id="inGameLev">1</span>x)</div><div id="unrealized-pnl" class="value">--</div></div>
+
+        <div class="stat-box"><div class="label" style="color:var(--up-color);" data-i18n="lp">做多持倉</div><div id="long-pos" class="value">0.0000</div></div>
+        <div class="stat-box" id="dash-short"><div class="label" style="color:var(--down-color);" data-i18n="sp">做空持倉</div><div id="short-pos" class="value">0.0000</div></div>
         
         <div class="top-btn-group">
-            <div class="icon-btn" id="surrender-btn" onclick="location.reload()">🏳️ 重來</div>
+            <div class="icon-btn" id="surrender-btn" onclick="location.reload()" data-i18n="retry">🏳️ 重來</div>
             <div class="icon-btn" id="mute-btn" onclick="toggleMute()">🔊</div>
         </div>
     </div>
@@ -121,103 +125,255 @@
         <div id="price-tag"></div>
         <canvas id="mainChart"></canvas>
         
-        <div id="restore-overlay-btn" onclick="showEndOverlay()">🏆 顯示結算</div>
+        <div id="restore-overlay-btn" onclick="showEndOverlay()" data-i18n="hideEnd">🏆 顯示結算</div>
     </div>
 
     <div class="controls">
-        <div class="slider-container"><span class="label">保證金投入(%):</span><input type="range" id="buyAmountSlider" min="10" max="100" step="10" value="50" oninput="updateSliderLabel(this.value)"><span id="sliderLabel" class="value">50%</span></div>
+        <div class="slider-container"><span class="label" data-i18n="marginLbl">保證金投入(%):</span><input type="range" id="buyAmountSlider" min="10" max="100" step="10" value="50" oninput="updateSliderLabel(this.value)"><span id="sliderLabel" class="value">50%</span></div>
         <div class="btn-group" id="main-btn-group">
-            <button class="btn-long" id="btn-long-action" onclick="action('long')">做多</button>
-            <button class="btn-short" id="btn-short-action" onclick="action('short')">做空</button>
-            <button class="btn-closeAll" id="sellBtn" onclick="action('closeAll')" disabled>全平</button>
-            <button class="btn-wait" id="btn-next" onclick="action('wait')">下一根</button>
+            <button class="btn-long" id="btn-long-action" onclick="action('long')" data-i18n="btnLong">做多</button>
+            <button class="btn-short" id="btn-short-action" onclick="action('short')" data-i18n="btnShort">做空</button>
+            <button class="btn-closeAll" id="sellBtn" onclick="action('closeAll')" disabled data-i18n="btnClose">全平</button>
+            <button class="btn-wait" id="btn-next" onclick="action('wait')" data-i18n="btnNext">下一根</button>
         </div>
     </div>
 
     <div id="start-screen" class="fullscreen-overlay">
-        <h1>單車摩托爭奪戰</h1>
+        <select id="lang-select" onchange="changeLang(this.value)">
+            <option value="en" selected>🇺🇸 English</option>
+            <option value="tw">🇹🇼 繁體中文</option>
+            <option value="es">🇪🇸 Español</option>
+            <option value="fr">🇫🇷 Français</option>
+        </select>
+
+        <h1 data-i18n="title">Crypto Degen Brawl</h1>
         
         <div class="intro-box">
-            <p>👉 選擇 <span>【簡易上手】</span>：<br>適合新手。系統鎖定 3倍槓桿、只能買漲，體驗最純粹的看盤快感。</p>
+            <p data-i18n="easyP1">👉 Select <span>【Easy Mode】</span>:<br>For normies. Locked at 3x lev, Long only. Pure chart watching.</p>
             <hr style="border:0; border-top:1px solid #444; margin: 8px 0;">
-            <p>👉 選擇 <span>【進階合約】</span>：<br>適合老韭菜。百倍槓桿、自訂本金，生死有命富貴在天。</p>
-            <p style="color:var(--down-color); margin-top: 6px; font-size: 10px;">🚨 提示：突發新聞可能是「主力騙局（利多出盡）」，請小心！</p>
+            <p data-i18n="advP1">👉 Select <span>【Degen Mode】</span>:<br>For crypto veterans. 100x lev, Long/Short, custom capital. YOLO.</p>
+            <p style="color:var(--down-color); margin-top: 6px; font-size: 10px;" data-i18n="warn">🚨 Hint: Breaking news might be a 'Bull Trap' (Fakeout), stay SAFU!</p>
         </div>
 
         <div id="initial-buttons" style="display: flex; gap: 10px; width: 100%; max-width: 320px;">
-            <button onclick="easyStart()" style="background: #34c759; color: white; flex: 1; padding: 10px; border-radius: 8px; font-size: 14px; box-shadow: 0 4px 10px rgba(52, 199, 89, 0.4);">🌱 簡易上手</button>
-            <button onclick="showAdvancedSettings()" style="background: var(--card-bg); border: 1px solid var(--accent); color: var(--accent); flex: 1; padding: 10px; border-radius: 8px; font-size: 14px;">🔥 進階合約</button>
+            <button onclick="easyStart()" style="background: #34c759; color: white; flex: 1; padding: 10px; border-radius: 8px; font-size: 14px; box-shadow: 0 4px 10px rgba(52, 199, 89, 0.4);" data-i18n="easyMode">🌱 Easy Mode</button>
+            <button onclick="showAdvancedSettings()" style="background: var(--card-bg); border: 1px solid var(--accent); color: var(--accent); flex: 1; padding: 10px; border-radius: 8px; font-size: 14px;" data-i18n="advMode">🔥 Degen Mode</button>
         </div>
 
         <div id="advanced-settings" class="setup-group">
-            <span class="setup-label">你的名字 (榜單用)</span>
+            <span class="setup-label" data-i18n="nameLbl">Your Name (Leaderboard)</span>
             <div style="display: flex; gap: 8px; margin-bottom: 12px;">
                 <input type="text" id="playerName" style="flex-grow: 1; background:#333; border:1px solid #555; color:white; padding:6px 8px; border-radius:6px; font-family:inherit; font-size: 12px; margin:0;">
                 <button onclick="rollName()" style="background: var(--accent); color: black; margin:0; width: 36px; font-size: 16px;">🎲</button>
             </div>
 
-            <span class="setup-label">選擇交易對 (影響波動)</span>
+            <span class="setup-label" data-i18n="coinLbl">Trading Pair (Volatility)</span>
             <div class="cap-btn-group">
-                <button class="cap-btn active" id="coin-btc" onclick="selectCoin('BTC')">BTC (穩健)</button>
-                <button class="cap-btn" id="coin-doge" onclick="selectCoin('DOGE')">DOGE (瘋狗)</button>
+                <button class="cap-btn active" id="coin-btc" onclick="selectCoin('BTC')">BTC (Stable)</button>
+                <button class="cap-btn" id="coin-doge" onclick="selectCoin('DOGE')">DOGE (Degen)</button>
             </div>
 
-            <span class="setup-label">初始資金 (USDT)</span>
+            <span class="setup-label" data-i18n="capLbl">Initial Capital (USDT)</span>
             <div class="cap-btn-group">
                 <button class="cap-btn" onclick="selectCapital(100)">100</button>
                 <button class="cap-btn active" id="cap-1000" onclick="selectCapital(1000)">1000</button>
             </div>
             
             <div class="toggle-container">
-                <span class="toggle-label">允許做空 (多空雙開)</span>
+                <span class="toggle-label" data-i18n="shortLbl">Allow Shorting</span>
                 <label class="switch">
                     <input type="checkbox" id="allowShortToggle" checked onchange="toggleShortMode(this.checked)">
                     <span class="slider"></span>
                 </label>
             </div>
 
-            <span class="setup-label">槓桿倍數 (<span id="levDisplay">10</span>x)</span>
+            <span class="setup-label"><span data-i18n="levLbl">Leverage</span> (<span id="levDisplay">10</span>x)</span>
             <input type="range" id="leverageSlider" min="1" max="100" step="1" value="10" oninput="updateLev(this.value)" style="width: 100%;">
-            <div style="font-size:10px; color:#aaa; text-align:right;">(最高支援 100x 信仰)</div>
+            <div style="font-size:10px; color:#aaa; text-align:right;">(Max 100x)</div>
             
-            <button id="enter-market-btn" onclick="startGame(false)">進入市場</button>
+            <button id="enter-market-btn" onclick="startGame(false)" data-i18n="enterBtn">ENTER MARKET</button>
         </div>
     </div>
 
     <div id="overlay" class="fullscreen-overlay" style="display: none; background: rgba(0,0,0,0.4);">
         <div style="width: 100%; max-width: 300px; text-align: right; margin-bottom: 5px;">
-            <button onclick="hideEndOverlay()" style="background: rgba(0,0,0,0.6); border: 1px solid #555; color: #aaa; padding: 4px 10px; border-radius: 4px; font-size: 11px;">👀 縮小面板回顧線圖</button>
+            <button onclick="hideEndOverlay()" style="background: rgba(0,0,0,0.6); border: 1px solid #555; color: #aaa; padding: 4px 10px; border-radius: 4px; font-size: 11px;" data-i18n="hideEnd">👀 Hide Panel</button>
         </div>
         
         <h2 id="rank-title" style="margin: 0;"></h2>
         <div id="rank-subtitle"></div>
         
         <div style="background: var(--card-bg); padding: 15px; border-radius: 10px; text-align: left; width: 100%; max-width: 300px; margin-bottom: 15px; box-shadow: 0 4px 15px rgba(0,0,0,0.5);">
-            <p style="margin: 4px 0; font-size: 13px; color:var(--text-dim);">操作次數: <span id="res-trades" style="float: right; color:white;"></span></p>
-            <p style="margin: 4px 0; font-size: 13px; color:var(--text-dim);">最長抱單: <span id="res-hold" style="float: right; color:white;"></span></p>
+            <p style="margin: 4px 0; font-size: 13px; color:var(--text-dim);"><span data-i18n="tradesLbl">Total Trades:</span> <span id="res-trades" style="float: right; color:white;"></span></p>
+            <p style="margin: 4px 0; font-size: 13px; color:var(--text-dim);"><span data-i18n="holdLbl">Max Hold:</span> <span id="res-hold" style="float: right; color:white;"></span></p>
             <hr style="border-color: #333; margin: 8px 0;">
-            <p style="margin: 4px 0; font-size: 14px; font-weight: bold;">最終報酬率: <span id="res-roi" style="float: right;"></span></p>
+            <p style="margin: 4px 0; font-size: 14px; font-weight: bold;"><span data-i18n="roiLbl">Final ROI:</span> <span id="res-roi" style="float: right;"></span></p>
         </div>
 
         <div style="display: flex; gap: 10px; width: 100%; max-width: 300px; margin-bottom: 10px;">
-            <button id="save-lb-btn" onclick="saveToLeaderboard()" style="background: #ff9500; color: white; flex: 1; margin:0; box-shadow: 0 2px 8px rgba(0,0,0,0.4);">💾 記在排行榜</button>
-            <button onclick="openLeaderboard()" style="background: #333; border: 1px solid var(--accent); color: white; flex: 1; margin:0; box-shadow: 0 2px 8px rgba(0,0,0,0.4);">🏆 英雄榜</button>
+            <button id="save-lb-btn" onclick="saveToLeaderboard()" style="background: #ff9500; color: white; flex: 1; margin:0; box-shadow: 0 2px 8px rgba(0,0,0,0.4);" data-i18n="saveLb">💾 Save Rank</button>
+            <button onclick="openLeaderboard()" style="background: #333; border: 1px solid var(--accent); color: white; flex: 1; margin:0; box-shadow: 0 2px 8px rgba(0,0,0,0.4);" data-i18n="lbBtn">🏆 Leaderboard</button>
         </div>
 
-        <button onclick="location.reload()" style="background: var(--accent); color: black; width: 100%; max-width: 300px; margin-top: 5px; box-shadow: 0 2px 8px rgba(0,0,0,0.4);">再戰一場</button>
+        <button onclick="location.reload()" style="background: var(--accent); color: black; width: 100%; max-width: 300px; margin-top: 5px; box-shadow: 0 2px 8px rgba(0,0,0,0.4);" data-i18n="playAgain">Play Again</button>
         <div id="devil-text" style="margin-top: 20px; font-size: 12px; color: var(--text-dim); font-style: italic; max-width: 280px; text-shadow: 1px 1px 2px #000; background: rgba(0,0,0,0.5); padding: 5px; border-radius: 5px;"></div>
     </div>
 
     <div id="lb-modal">
-        <h2 style="color: var(--accent); margin-bottom: 20px; font-size: 20px;">🏆 真人合約英雄榜</h2>
+        <h2 style="color: var(--accent); margin-bottom: 20px; font-size: 20px;" data-i18n="lbTitle">🏆 Degen Leaderboard</h2>
         <div class="lb-card">
-            <div class="lb-row lb-header"><span>名次</span><span>玩家 (幣種)</span><span style="text-align: right;">報酬率</span></div>
+            <div class="lb-row lb-header"><span data-i18n="rankCol">Rank</span><span data-i18n="playerCol">Player (Coin)</span><span style="text-align: right;" data-i18n="roiCol">ROI</span></div>
             <div id="lb-content"></div>
         </div>
-        <button onclick="closeLeaderboard()" style="background: #444; color: white; margin-top: 25px; padding: 8px 25px; border-radius: 8px; border: none; font-size: 14px;">關閉</button>
+        <button onclick="closeLeaderboard()" style="background: #444; color: white; margin-top: 25px; padding: 8px 25px; border-radius: 8px; border: none; font-size: 14px;" data-i18n="closeBtn">Close</button>
     </div>
 
 <script>
+    // i18n Dictionary
+    const i18n = {
+        en: {
+            bal: "Balance(U)", eq: "Total Equity(U)", pnl: "Unrealized PNL", lp: "Long Pos", sp: "Short Pos", retry: "🏳️ Retry",
+            title: "Crypto Degen Brawl", easyMode: "🌱 Easy Mode", advMode: "🔥 Degen Mode",
+            easyP1: "👉 Select <span>【Easy Mode】</span>:<br>For normies. Locked at 3x lev, Long only. Pure chart watching.",
+            advP1: "👉 Select <span>【Degen Mode】</span>:<br>For crypto veterans. 100x lev, Long/Short, custom capital. YOLO.",
+            warn: "🚨 Hint: Breaking news might be a 'Bull Trap' (Fakeout), stay SAFU!",
+            nameLbl: "Your Name (Leaderboard)", coinLbl: "Trading Pair (Volatility)", capLbl: "Initial Capital (USDT)",
+            shortLbl: "Allow Shorting", levLbl: "Leverage", enterBtn: "ENTER MARKET",
+            marginLbl: "Margin(%):", btnLong: "Long", btnShort: "Short", btnClose: "Close All", btnNext: "Next",
+            alert15: "⚠️ 15 Candles Left!", hideEnd: "👀 Hide Panel",
+            tradesLbl: "Total Trades:", holdLbl: "Max Hold:", roiLbl: "Final ROI:",
+            saveLb: "💾 Save Rank", lbBtn: "🏆 Leaderboard", playAgain: "Play Again",
+            lbTitle: "🏆 Degen Leaderboard", rankCol: "Rank", playerCol: "Player", roiCol: "ROI", closeBtn: "Close",
+            msgNoBal: "Not enough balance", msgNoPos: "No positions", msgTakeProfit: "Take profit suggested!",
+            msgRocket: "🚀 To the Moon!", msgDump: "💀 Mega Dump!", msgSurvive: "🚀 Miraculous Survival!", msgHell: "💀 Rekt to Zero!",
+            r_SSS: "RANK SSS (Crypto God)", r_SS: "RANK SS (Whale)", r_S: "RANK S (Money Printer)", r_AP: "RANK A+ (Chad)", r_A: "RANK A (Survivor)", r_BM: "RANK B- (Wagie)", r_CP: "RANK C+ (Paper Hands)", r_D: "RANK D (Exit Liquidity)", r_F: "RANK F (Wendy's VIP)", r_G: "RANK G (Flash Rekt)", r_E: "RANK E (Lurker)",
+            s_SSS_h: "🔥 Diamond Hands! You flipped it {multi}x! WallStreetBets is calling you!",
+            s_SSS_f: "🔥 High Frequency Chad! You flipped it {multi}x! You drained the liquidity pool!",
+            s_SS: "🚀 Absolute unit! +{roi}%! You are the market maker now!",
+            s_S: "🎰 Money Printer! +{roi}%! Wen Lambo? Your mouse is made of gold!",
+            s_AP: "🥂 Chad! +{roi}%! Beating the S&P 500 in 10 minutes. WAGMI!",
+            s_A: "📈 Steady gains! You secured the bag. Time for chicken tendies.",
+            s_BM: "🐢 Churning fees for the exchange? NGMI. Go back to McDonald's.",
+            s_CP: "✂️ Panic sold at the bottom? At least you didn't get liquidated.",
+            s_D: "🧼 You are the exit liquidity. Hope you like ramen.",
+            s_F: "☠️ Max leverage, zero risk management. Lost it all and owe {eq}U. Welcome to Wendy's.",
+            s_G: "⚡ Speedrun to $0. Didn't even last 5 candles. Thanks for the free money!",
+            s_E: "💤 0 trades? Go open a savings account, boomer. The casino despises you.",
+            quotes: ["100x leverage or no balls!", "Is that all? High leverage is the only way!", "Real chads sleep with 50x open.", "Scared of liquidation? Next time go all in.", "Be greedy when others are fearful, get rekt when others take profit."],
+            nBull: ["BREAKING: Ceasefire signed!", "BREAKING: Fed emergency rate cut!", "BREAKING: Musk tweets support!", "BREAKING: Apple buys Bitcoin!", "BREAKING: SEC approves all ETFs!"],
+            nBear: ["BREAKING: War declared!", "BREAKING: Fed surprise rate hike!", "BREAKING: Major exchange hacked!", "BREAKING: US Govt dumps BTC!", "BREAKING: Stablecoin depegs!"]
+        },
+        tw: {
+            bal: "可用餘額(U)", eq: "總資產(U)", pnl: "未實現盈虧", lp: "做多持倉", sp: "做空持倉", retry: "🏳️ 重來",
+            title: "單車摩托爭奪戰", easyMode: "🌱 簡易上手", advMode: "🔥 進階合約",
+            easyP1: "👉 選擇 <span>【簡易上手】</span>：<br>適合新手。系統鎖定 3倍槓桿、只能買漲，體驗最純粹的看盤快感。",
+            advP1: "👉 選擇 <span>【進階合約】</span>：<br>適合老韭菜。百倍槓桿、多空雙殺、自訂本金，生死有命富貴在天。",
+            warn: "🚨 提示：突發新聞可能是「主力騙局（利多出盡）」，請小心！",
+            nameLbl: "你的名字 (榜單用)", coinLbl: "選擇交易對 (影響波動)", capLbl: "初始資金 (USDT)",
+            shortLbl: "允許做空 (多空雙開)", levLbl: "槓桿倍數", enterBtn: "進入市場",
+            marginLbl: "保證金投入(%):", btnLong: "做多", btnShort: "做空", btnClose: "全平", btnNext: "下一根",
+            alert15: "⚠️ 倒數 15 根 K 線！", hideEnd: "👀 縮小面板回顧線圖",
+            tradesLbl: "操作次數:", holdLbl: "最長抱單:", roiLbl: "最終報酬率:",
+            saveLb: "💾 記在排行榜", lbBtn: "🏆 英雄榜", playAgain: "再戰一場",
+            lbTitle: "🏆 真人合約英雄榜", rankCol: "名次", playerCol: "玩家 (幣種)", roiCol: "報酬率", closeBtn: "關閉",
+            msgNoBal: "餘額不足", msgNoPos: "手上沒單", msgTakeProfit: "建議見好就收！",
+            msgRocket: "🚀 大爆漲！", msgDump: "💀 大瀑布！", msgSurvive: "🚀 奇蹟生還！", msgHell: "💀 暴富變破產！",
+            r_SSS: "RANK SSS (天選交易神)", r_SS: "RANK SS (無情收割機)", r_S: "RANK S (合約印鈔機)", r_AP: "RANK A+ (華爾街預備軍)", r_A: "RANK A (穩健贏家)", r_BM: "RANK B- (瞎忙打工仔)", r_CP: "RANK C+ (停損達人)", r_D: "RANK D (標準鮮嫩韭菜)", r_F: "RANK F (天台 VIP)", r_G: "RANK G (光速白給)", r_E: "RANK E (觀望大師)",
+            s_SSS_h: "🔥 天選交易神！本金翻了 {multi} 倍以上！死拿大師看準趨勢死抱不放，華爾街連夜搭專機來拜師！",
+            s_SSS_f: "🔥 天選交易神！本金翻了 {multi} 倍以上！高頻神童精準踏在每個波段，主力直接被你玩破產！",
+            s_SS: "🚀 無情收割機！暴賺 {roi}%！這根本不是在交易，你是在明目張膽地搶劫交易所！",
+            s_S: "🎰 合約印鈔機！獲利高達 {roi}%！你的滑鼠是金子做的吧？今晚直接包場慶祝！",
+            s_AP: "🥂 華爾街預備軍！獲利突破 {roi}%！這個績效已經屌打一票死薪水了，繼續保持！",
+            s_A: "📈 穩穩的幸福！懂得見好就收，今天晚餐可以幫自己加個大雞腿了。",
+            s_BM: "🐢 瘋狂殺進殺出，結果只賺個便當錢？瞎折騰一場，根本是給交易所打工！",
+            s_CP: "✂️ 瘋狂刷單結果還是虧！但至少你懂得及時停損，沒把底褲賠光，算你命大。",
+            s_D: "🧼 你的本金已經變成主力車庫裡的法拉利了。乖乖去打工還債吧。",
+            s_F: "☠️ 槓桿拉滿，直接抬走！連渣都不剩，甚至倒欠 {eq} U。天台的風很大...",
+            s_G: "⚡ 光速白給！開倉撐不到 5 根 K 線就灰飛煙滅。你的保證金是大風刮來的嗎？主力最愛你這種送財童子！",
+            s_E: "💤 觀望大師？一頓操作猛如虎，一看次數只有一。你把合約當作定存買嗎？連手續費都不夠付！",
+            quotes: ["膽子大一點，100 倍槓桿別猶豫！", "才賺這點？高槓桿才是暴富真理！", "真正的勇士，帶著 50 倍槓桿睡覺。", "怕爆倉就不要玩合約，下次拉滿？", "別人恐懼我貪婪，別人小虧我破產。"],
+            nBull: ["突發：交戰國簽訂停戰協議！", "突發：聯準會緊急降息兩碼！", "突發：馬斯克發推力挺！", "突發：蘋果宣布將比特幣納入公司資產儲備！", "突發：中東土豪國主權基金宣布重倉買入！"],
+            nBear: ["突發：川普向伊朗宣戰！恐慌蔓延！", "突發：聯準會意外升息！", "突發：最大交易所遭駭客攻擊！", "突發：美政府錢包突遭轉出 20 萬枚比特幣砸盤！", "突發：最大穩定幣發行商爆出儲備金挪用醜聞！"]
+        },
+        es: {
+            bal: "Balance(U)", eq: "Equidad(U)", pnl: "PNL Irreal", lp: "Pos Larga", sp: "Pos Corta", retry: "🏳️ Reintentar",
+            title: "Cripto Degen Brawl", easyMode: "🌱 Modo Fácil", advMode: "🔥 Modo Degen",
+            easyP1: "👉 Selecciona <span>【Fácil】</span>:<br>Para normies. Apalancamiento 3x, solo Largo. Gráficos puros.",
+            advP1: "👉 Selecciona <span>【Degen】</span>:<br>Para veteranos cripto. 100x apalancamiento, Largo/Corto, capital Yolo.",
+            warn: "🚨 Ojo: Las noticias pueden ser una 'Trampa Alcista' (Fakeout), ¡SAFU!",
+            nameLbl: "Tu Nombre (Ranking)", coinLbl: "Par de Trading (Volatilidad)", capLbl: "Capital Inicial (USDT)",
+            shortLbl: "Permitir Cortos", levLbl: "Apalancamiento", enterBtn: "ENTRAR AL MERCADO",
+            marginLbl: "Margen(%):", btnLong: "Largo", btnShort: "Corto", btnClose: "Cerrar Todo", btnNext: "Siguiente",
+            alert15: "⚠️ ¡Faltan 15 Velas!", hideEnd: "👀 Ocultar Panel",
+            tradesLbl: "Total Trades:", holdLbl: "Hold Máximo:", roiLbl: "ROI Final:",
+            saveLb: "💾 Guardar", lbBtn: "🏆 Ranking", playAgain: "Jugar de Nuevo",
+            lbTitle: "🏆 Ranking Degen", rankCol: "Rango", playerCol: "Jugador", roiCol: "ROI", closeBtn: "Cerrar",
+            msgNoBal: "Sin saldo", msgNoPos: "Sin posición", msgTakeProfit: "¡Toma ganancias!",
+            msgRocket: "🚀 ¡A la luna!", msgDump: "💀 ¡Mega Dump!", msgSurvive: "🚀 ¡Milagro de vida!", msgHell: "💀 ¡Liquidado a cero!",
+            r_SSS: "RANGO SSS (Dios Cripto)", r_SS: "RANGO SS (Ballena)", r_S: "RANGO S (Impresora)", r_AP: "RANGO A+ (Chad)", r_A: "RANGO A (Sobreviviente)", r_BM: "RANGO B- (Esclavo de Fees)", r_CP: "RANGO C+ (Manos de Papel)", r_D: "RANGO D (Liquidez de Salida)", r_F: "RANGO F (VIP McDonald's)", r_G: "RANGO G (Flash Rekt)", r_E: "RANGO E (Mirón)",
+            s_SSS_h: "🔥 ¡Manos de Diamante! ¡La reventaste {multi}x! ¡WallStreetBets te llama!",
+            s_SSS_f: "🔥 ¡Chad de Alta Frecuencia! ¡Multiplicaste {multi}x! ¡Vaciaste la liquidez!",
+            s_SS: "🚀 ¡Unidad absoluta! +{roi}%! ¡Tú eres el creador de mercado!",
+            s_S: "🎰 ¡Impresora de dinero! +{roi}%! Wen Lambo? ¡Ratón de oro!",
+            s_AP: "🥂 ¡Chad! +{roi}%! Superando al S&P 500. ¡WAGMI!",
+            s_A: "📈 ¡Ganancias seguras! Aseguraste la bolsa. A por pollito.",
+            s_BM: "🐢 ¿Haciendo rico al exchange? NGMI. Vuelve a McDonald's.",
+            s_CP: "✂️ Vendiste en pánico en el fondo, pero sigues vivo.",
+            s_D: "🧼 Eres la liquidez de salida. A comer Maruchan.",
+            s_F: "☠️ Apalancamiento máximo, cero gestión. Perdiste y debes {eq}U. Nos vemos en Wendy's.",
+            s_G: "⚡ Speedrun a $0. Ni 5 velas duraste. ¡Gracias por la donación!",
+            s_E: "💤 ¿0 trades? Ve a comprar bonos del estado, boomer. El casino te odia.",
+            quotes: ["¡100x o nada!", "¿Tan poco? ¡Alto apalancamiento es la ley!", "Los verdaderos Chads duermen con 50x.", "¿Miedo de que te liquiden? Pon todo.", "Codicioso cuando tienen miedo, rekt cuando cobran."],
+            nBull: ["¡ÚLTIMA HORA: Alto al fuego!", "¡ÚLTIMA HORA: Recorte de tasas!", "¡ÚLTIMA HORA: Elon Musk apoya!", "¡ÚLTIMA HORA: Apple compra Bitcoin!", "¡ÚLTIMA HORA: SEC aprueba ETFs!"],
+            nBear: ["¡ÚLTIMA HORA: Guerra declarada!", "¡ÚLTIMA HORA: Subida de tasas!", "¡ÚLTIMA HORA: Exchange hackeado!", "¡ÚLTIMA HORA: Gobierno vende BTC!", "¡ÚLTIMA HORA: Stablecoin colapsa!"]
+        },
+        fr: {
+            bal: "Solde(U)", eq: "Équité(U)", pnl: "PNL Latent", lp: "Pos Long", sp: "Pos Short", retry: "🏳️ Rejouer",
+            title: "Crypto Degen Brawl", easyMode: "🌱 Mode Facile", advMode: "🔥 Mode Degen",
+            easyP1: "👉 Sélectionnez <span>【Facile】</span>:<br>Pour les normies. Levier 3x, Long uniquement. Graphiques purs.",
+            advP1: "👉 Sélectionnez <span>【Degen】</span>:<br>Pour les vétérans. Levier 100x, Long/Short, capital Yolo.",
+            warn: "🚨 Attention : Les breaking news peuvent être un 'Bull Trap' (Fakeout), restez SAFU!",
+            nameLbl: "Ton Nom (Classement)", coinLbl: "Paire (Volatilité)", capLbl: "Capital Initial (USDT)",
+            shortLbl: "Autoriser Shorts", levLbl: "Levier", enterBtn: "ENTRER SUR LE MARCHÉ",
+            marginLbl: "Marge(%):", btnLong: "Long", btnShort: "Short", btnClose: "Fermer Tout", btnNext: "Suivant",
+            alert15: "⚠️ 15 Bougies Restantes!", hideEnd: "👀 Masquer Panneau",
+            tradesLbl: "Total Trades:", holdLbl: "Max Hold:", roiLbl: "ROI Final:",
+            saveLb: "💾 Sauvegarder", lbBtn: "🏆 Classement", playAgain: "Rejouer",
+            lbTitle: "🏆 Classement Degen", rankCol: "Rang", playerCol: "Joueur", roiCol: "ROI", closeBtn: "Fermer",
+            msgNoBal: "Fonds insuffisants", msgNoPos: "Pas de position", msgTakeProfit: "Prends tes gains!",
+            msgRocket: "🚀 To the Moon!", msgDump: "💀 Mega Dump!", msgSurvive: "🚀 Miraculé!", msgHell: "💀 Liquidé à zéro!",
+            r_SSS: "RANG SSS (Dieu Crypto)", r_SS: "RANG SS (Baleine)", r_S: "RANG S (Imprimante)", r_AP: "RANG A+ (Chad)", r_A: "RANG A (Survivant)", r_BM: "RANG B- (Esclave des Frais)", r_CP: "RANG C+ (Paper Hands)", r_D: "RANG D (Exit Liquidity)", r_F: "RANG F (McDo VIP)", r_G: "RANG G (Flash Rekt)", r_E: "RANG E (Touriste)",
+            s_SSS_h: "🔥 Diamond Hands! Tu as fait x{multi} ! WallStreetBets t'appelle !",
+            s_SSS_f: "🔥 Chad Haute Fréquence! x{multi} ! Tu as drainé la liquidité !",
+            s_SS: "🚀 Unité absolue! +{roi}%! C'est toi le market maker maintenant !",
+            s_S: "🎰 Imprimante à billets! +{roi}%! Wen Lambo? Souris en or !",
+            s_AP: "🥂 Chad! +{roi}%! Tu bats le S&P 500. WAGMI!",
+            s_A: "📈 Gains solides! Tu as sécurisé le sac.",
+            s_BM: "🐢 Tu engraisses l'exchange ? NGMI. Retourne au McDo.",
+            s_CP: "✂️ Vendu en panique en bas ? Au moins t'es pas liquidé.",
+            s_D: "🧼 Tu sers de liquidité de sortie. Bon appétit les nouilles.",
+            s_F: "☠️ Levier max, zéro gestion. Tout perdu, tu dois {eq}U. Bienvenue chez Wendy's.",
+            s_G: "⚡ Speedrun à $0. Liquidé en 5 bougies. Merci pour l'argent gratuit !",
+            s_E: "💤 0 trade ? Ouvre un Livret A, boomer. Le casino te déteste.",
+            quotes: ["100x ou rien !", "C'est tout ? Le levier est la voie !", "Les vrais chads dorment avec x50.", "Peur d'être liquidé ? Fais tapis.", "Avide quand ils ont peur, rekt quand ils encaissent."],
+            nBull: ["FLASH: Cessez-le-feu !", "FLASH: Baisse des taux FED !", "FLASH: Musk tweete son soutien !", "FLASH: Apple achète du Bitcoin !", "FLASH: SEC approuve les ETFs !"],
+            nBear: ["FLASH: Guerre déclarée !", "FLASH: Hausse surprise des taux !", "FLASH: Exchange piraté !", "FLASH: Le gouvernement vend du BTC !", "FLASH: Stablecoin s'effondre !"]
+        }
+    };
+
+    let currentLang = 'en';
+
+    function changeLang(lang) {
+        currentLang = lang;
+        document.querySelectorAll('[data-i18n]').forEach(el => {
+            const key = el.getAttribute('data-i18n');
+            if (i18n[lang][key]) {
+                el.innerHTML = i18n[lang][key];
+            }
+        });
+        document.getElementById('playerName').placeholder = i18n[lang].nameLbl;
+    }
+
     const audioCtx = new (window.AudioContext || window.webkitAudioContext)();
     const bgmAudio = new Audio('./bgm.mp3'); 
     bgmAudio.loop = true; bgmAudio.volume = 0.5;
@@ -320,8 +476,8 @@
         let hasNews = Math.random() > 0.3; 
         if(hasNews) {
             let alertIndex = 15 + Math.floor(Math.random() * 20); let execIndex = alertIndex + 1 + Math.floor(Math.random() * 3); let isBullNews = Math.random() > 0.5; let isFakeout = Math.random() > 0.4; 
-            const bullNews = ["突發：交戰國簽訂停戰協議！", "突發：聯準會緊急降息兩碼！", "突發：馬斯克發推力挺！", "突發：蘋果宣布將比特幣納入公司資產儲備！", "突發：中東土豪國主權基金宣布重倉買入！", "突發：SEC 意外批准所有現貨 ETF 申請！", "突發：某神祕巨鯨直接銷毀了總量 10% 的代幣！", "突發：亞馬遜宣布全面接受加密貨幣支付！", "突發：知名支付巨頭整合加密貨幣結算系統！", "突發：某大國最高法院裁定加密貨幣完全合法！", "突發：SEC 宣布即將推出全面性加密貨幣監管新規！", "突發：聯準會宣布維持利率不變，鮑爾會後聲明語帶玄機！", "突發：全球最大交易所突然暫停提幣，官方稱系統重大升級！"];
-            const bearNews = ["突發：川普向伊朗宣戰！恐慌蔓延！", "突發：聯準會意外升息！", "突發：最大交易所遭駭客攻擊！", "突發：美政府錢包突遭轉出 20 萬枚比特幣砸盤！", "突發：最大穩定幣發行商爆出儲備金挪用醜聞！", "突發：某大國宣布全面封殺並強制沒收加密資產！", "突發：知名公鏈遭 51% 算力攻擊，網路大癱瘓！", "突發：華爾街巨頭宣布清倉所有加密貨幣資產！", "突發：核心開發團隊宣布內訌並放棄維護該項目！", "突發：馬斯克發推怒退追蹤，並痛批該幣是騙局！", "突發：沉睡十年的遠古巨鯨錢包突然甦醒，轉移巨額資產！", "突發：開發團隊突然提前解鎖高達 20% 的代幣總量！", "突發：核心社群爆發重大分歧，知名公鏈恐面臨硬分叉！"];
+            const bullNews = i18n[currentLang].nBull;
+            const bearNews = i18n[currentLang].nBear;
             window.newsAlerts[alertIndex] = isBullNews ? bullNews[Math.floor(Math.random()*bullNews.length)] : bearNews[Math.floor(Math.random()*bearNews.length)];
             let newsImpact = (isBTC ? 0.08 : 0.15) + Math.random() * 0.05; 
             if(isBullNews) {
@@ -346,7 +502,7 @@
 
     function startGame(isEasy = false) {
         if(!isEasy) isEasyMode = false;
-        playerName = document.getElementById('playerName').value || "無名韭菜";
+        playerName = document.getElementById('playerName').value || (currentLang === 'tw' ? "無名韭菜" : "Anon Degen");
         bgmAudio.playbackRate = 1.0; bgmAudio.currentTime = 0; 
         if (bgmAudio.paused && !isMuted) bgmAudio.play().catch(e => {});
         
@@ -406,8 +562,8 @@
                 ctx.fillStyle = color; ctx.font = 'bold 11px sans-serif'; ctx.fillText(lbl, 5, y - 5);
             }
         };
-        if (longPos > 0) drawLine(longCost, 'var(--up-color)', '做多均價');
-        if (shortPos > 0) drawLine(shortCost, 'var(--down-color)', '做空均價');
+        if (longPos > 0) drawLine(longCost, 'var(--up-color)', 'Avg Long');
+        if (shortPos > 0) drawLine(shortCost, 'var(--down-color)', 'Avg Short');
         visibleData.forEach((d, i) => {
             const x = i * cW + 2, getY = (p) => h - ((p - minP) / range) * h;
             ctx.fillStyle = d.close >= d.open ? '#00c087' : '#ff3b30';
@@ -423,7 +579,7 @@
         const price = marketData[currentStep-1].close; const margin = balance * (parseInt(document.getElementById('buyAmountSlider').value) / 100);
         
         if (type === 'long' || type === 'short') {
-            if (margin < 0.1) { showMsg("餘額不足"); return; }
+            if (margin < 0.1) { showMsg(i18n[currentLang].msgNoBal); return; }
             if (longPos === 0 && shortPos === 0) { positionOpenStep = currentStep; }
             
             const size = (margin * leverage) / price;
@@ -433,10 +589,10 @@
         } else if (type === 'closeAll') {
             if (longPos > 0 || shortPos > 0) {
                 const lp = (price - longCost) * longPos, sp = (shortCost - price) * shortPos;
-                if (isEasyMode && (lp + sp) < 0 && !hasLostInEasy) { showMsg("建議見好就收！", 2500); hasLostInEasy = true; } else { playSound('close'); }
+                if (isEasyMode && (lp + sp) < 0 && !hasLostInEasy) { showMsg(i18n[currentLang].msgTakeProfit, 2500); hasLostInEasy = true; } else { playSound('close'); }
                 balance += (longMargin + lp + shortMargin + sp); longPos = 0; longMargin = 0; longCost = 0; shortPos = 0; shortMargin = 0; shortCost = 0;
                 tradeCount++;
-            } else { showMsg("手上沒單"); return; }
+            } else { showMsg(i18n[currentLang].msgNoPos); return; }
         }
         if(type === 'wait' || (type === 'closeAll' && longPos===0 && shortPos===0)) currentStep++;
         checkStatus();
@@ -450,9 +606,9 @@
 
         if (window.newsAlerts[currentStep]) {
             const ab = document.getElementById('alert-box'); ab.innerText = "📰 " + window.newsAlerts[currentStep]; ab.style.background = "rgba(240, 185, 11, 0.95)"; ab.style.color = "black"; ab.style.display = 'block';
-            bgmAudio.playbackRate = 1.1; setTimeout(() => { if(ab.innerText.includes("📰")) ab.style.display = 'none'; }, 3500);
+            bgmAudio.playbackRate = 1.1; setTimeout(() => { if(ab.innerText.includes("📰") || ab.innerText.includes("BREAKING") || ab.innerText.includes("FLASH")) ab.style.display = 'none'; }, 3500);
         }
-        if (currentStep === ALERT_STEP) { const ab = document.getElementById('alert-box'); ab.innerText = "⚠️ 倒數 15 根 K 線！"; ab.style.background = "rgba(255, 59, 48, 0.95)"; ab.style.color = "white"; ab.style.display = 'block'; bgmAudio.playbackRate = 1.35; }
+        if (currentStep === ALERT_STEP) { const ab = document.getElementById('alert-box'); ab.innerText = i18n[currentLang].alert15; ab.style.background = "rgba(255, 59, 48, 0.95)"; ab.style.color = "white"; ab.style.display = 'block'; bgmAudio.playbackRate = 1.35; }
         
         let triggerMusic = "";
         if (currentStep > 1) {
@@ -460,8 +616,8 @@
             const priceChange = (price - prevPrice) / prevPrice;
             const threshold = coinName === 'BTC' ? 0.04 : 0.08; 
 
-            if (priceChange >= threshold) { triggerMusic = "heaven"; showMsg("🚀 大爆漲！"); } 
-            else if (priceChange <= -threshold) { triggerMusic = "hell"; showMsg("💀 大瀑布！"); }
+            if (priceChange >= threshold) { triggerMusic = "heaven"; showMsg(i18n[currentLang].msgRocket); } 
+            else if (priceChange <= -threshold) { triggerMusic = "hell"; showMsg(i18n[currentLang].msgDump); }
         }
 
         if (triggerMusic !== "" && now - lastJumpTime > 5000) {
@@ -498,65 +654,69 @@
             bgmAudio.play().catch(e => {}); setTimeout(() => { bgmAudio.pause(); }, 2000);
         }
 
-        // 【極限挑戰：動態槓桿評分權重 X 5倍】
-        let targetSSS = leverage * 100;  // 100倍槓桿要求 +10000%
-        let targetSS  = leverage * 50;   // 100倍槓桿要求 +5000%
-        let targetS   = leverage * 20;   // 100倍槓桿要求 +2000%
-        let targetAPlus = leverage * 5;  // 100倍槓桿要求 +500%
+        let targetSSS = leverage * 100;  
+        let targetSS  = leverage * 50;   
+        let targetS   = leverage * 20;   
+        let targetAPlus = leverage * 5;  
 
-        let rank = "", sub = "", color = "";
+        let rankKey = "", subKey = "", color = "";
         
         if (tradeCount <= 1 && !isLiq && currentUserRoi > -90) {
-            rank = "RANK: E";
-            sub = "💤 觀望大師？一頓操作猛如虎，一看次數只有一。你把合約當作定存買嗎？連手續費都不夠付！";
-            color = "var(--text-dim)";
+            rankKey = "E"; color = "var(--text-dim)";
         } else if (isLiq || currentUserRoi <= -90) { 
             let survivedSteps = currentStep - positionOpenStep;
             if (positionOpenStep > 0 && survivedSteps < 5) {
-                rank = "RANK: G"; 
-                sub = `⚡ 光速白給！開倉撐不到 5 根 K 線就灰飛煙滅。你的保證金是大風刮來的嗎？主力最愛你這種送財童子！`;
-                color = "#ff2d55"; 
+                rankKey = "G"; color = "#ff2d55"; 
             } else {
-                rank = "RANK: F"; 
-                sub = `☠️ 槓桿拉滿，直接抬走！連渣都不剩，甚至倒欠 ${Math.abs(finalEquity).toFixed(2)} U。天台的風很大...`; 
-                color = "var(--down-color)"; 
+                rankKey = "F"; color = "var(--down-color)"; 
             }
         } else if (currentUserRoi < 0) {
             if (currentUserRoi > -30 && tradeCount >= 5) { 
-                rank = "RANK: C+"; sub = "✂️ 瘋狂刷單結果還是虧！但至少你懂得及時停損，沒把底褲賠光，算你命大。"; color = "#ff9500"; 
+                rankKey = "CP"; color = "#ff9500"; 
             } else { 
-                rank = "RANK: D"; sub = "🧼 你的本金已經變成主力車庫裡的法拉利了。乖乖去打工還債吧。"; color = "var(--down-color)"; 
+                rankKey = "D"; color = "var(--down-color)"; 
             }
         } else {
             if (currentUserRoi < (leverage * 0.2) && tradeCount > 8) { 
-                rank = "RANK: B-"; sub = "🐢 瘋狂殺進殺出，結果只賺個便當錢？瞎折騰一場，根本是給交易所打工！"; color = "#34c759"; 
+                rankKey = "BM"; color = "#34c759"; 
             } else if (currentUserRoi >= targetSSS) { 
-                rank = "RANK: SSS"; 
-                let multi = (targetSSS/100) + 1;
-                if (maxHoldingSteps >= 20) sub = `🔥 天選交易神！本金翻了 ${multi} 倍以上！死拿大師看準趨勢死抱不放，華爾街連夜搭專機來拜師！`;
-                else sub = `🔥 天選交易神！本金翻了 ${multi} 倍以上！高頻神童精準踏在每個波段，主力直接被你玩破產！`;
-                color = "var(--accent)"; 
+                rankKey = "SSS"; color = "var(--accent)"; 
             } else if (currentUserRoi >= targetSS) {
-                rank = "RANK: SS"; sub = `🚀 無情收割機！暴賺 ${targetSS}%！這根本不是在交易，你是在明目張膽地搶劫交易所！`; color = "#ff2d55";
+                rankKey = "SS"; color = "#ff2d55";
             } else if (currentUserRoi >= targetS) {
-                rank = "RANK: S"; sub = `🎰 合約印鈔機！獲利高達 ${targetS}%！你的滑鼠是金子做的吧？今晚直接包場慶祝！`; color = "#ff9500";
+                rankKey = "S"; color = "#ff9500";
             } else if (currentUserRoi >= targetAPlus) {
-                rank = "RANK: A+"; sub = `🥂 華爾街預備軍！獲利突破 ${targetAPlus}%！這個績效已經屌打一票死薪水了，繼續保持！`; color = "#32ade6";
+                rankKey = "AP"; color = "#32ade6";
             } else { 
-                rank = "RANK: A"; sub = "📈 穩穩的幸福！懂得見好就收，今天晚餐可以幫自己加個大雞腿了。"; color = "var(--up-color)"; 
+                rankKey = "A"; color = "var(--up-color)"; 
             }
         }
         
-        document.getElementById('rank-title').innerText = rank; document.getElementById('rank-title').style.color = color;
-        document.getElementById('rank-subtitle').innerText = sub; document.getElementById('rank-subtitle').style.color = color;
+        let rTitle = i18n[currentLang]["r_" + rankKey];
+        let rSub = "";
         
-        document.getElementById('res-trades').innerText = tradeCount + " 次";
-        document.getElementById('res-hold').innerText = maxHoldingSteps + " 根 K 線";
+        if (rankKey === "SSS") {
+            let multi = ((targetSSS/100) + 1).toFixed(1);
+            rSub = (maxHoldingSteps >= 20) ? i18n[currentLang].s_SSS_h : i18n[currentLang].s_SSS_f;
+            rSub = rSub.replace("{multi}", multi);
+        } else {
+            rSub = i18n[currentLang]["s_" + rankKey];
+            if(rankKey === "SS") rSub = rSub.replace("{roi}", targetSS.toFixed(0));
+            if(rankKey === "S") rSub = rSub.replace("{roi}", targetS.toFixed(0));
+            if(rankKey === "AP") rSub = rSub.replace("{roi}", targetAPlus.toFixed(0));
+            if(rankKey === "F") rSub = rSub.replace("{eq}", Math.abs(finalEquity).toFixed(2));
+        }
+
+        document.getElementById('rank-title').innerText = rTitle; document.getElementById('rank-title').style.color = color;
+        document.getElementById('rank-subtitle').innerText = rSub; document.getElementById('rank-subtitle').style.color = color;
+        
+        document.getElementById('res-trades').innerText = tradeCount + (currentLang === 'tw' ? " 次" : "");
+        document.getElementById('res-hold').innerText = maxHoldingSteps + (currentLang === 'tw' ? " 根 K 線" : " K-lines");
         document.getElementById('res-roi').innerText = (currentUserRoi > 0 ? "+" : "") + currentUserRoi.toFixed(2) + "%"; document.getElementById('res-roi').style.color = currentUserRoi >= 0 ? "var(--up-color)" : "var(--down-color)";
 
-        const quotes = ["膽子大一點，100 倍槓桿別猶豫！", "才賺這點？高槓桿才是暴富真理！", "真正的勇士，帶著 50 倍槓桿睡覺。", "怕爆倉就不要玩合約，下次拉滿？", "別人恐懼我貪婪，別人小虧我破產。"];
+        const quotes = i18n[currentLang].quotes;
         document.getElementById('devil-text').innerText = `"${quotes[Math.floor(Math.random()*quotes.length)]}"`;
-        const saveBtn = document.getElementById('save-lb-btn'); saveBtn.innerText = "💾 記在排行榜"; saveBtn.disabled = false; saveBtn.style.opacity = "1";
+        const saveBtn = document.getElementById('save-lb-btn'); saveBtn.innerText = i18n[currentLang].saveLb; saveBtn.disabled = false; saveBtn.style.opacity = "1";
     }
 
     function hideEndOverlay() { document.getElementById('overlay').style.display = 'none'; document.getElementById('restore-overlay-btn').style.display = 'block'; }
@@ -566,12 +726,12 @@
         realLeaderboard.push({ name: playerName, coin: coinName, roi: currentUserRoi });
         realLeaderboard.sort((a, b) => b.roi - a.roi); realLeaderboard = realLeaderboard.slice(0, 10);
         localStorage.setItem('realCryptoLb', JSON.stringify(realLeaderboard));
-        const sb = document.getElementById('save-lb-btn'); sb.innerText = "✅ 已加入榜單"; sb.disabled = true; sb.style.opacity = "0.5"; openLeaderboard();
+        const sb = document.getElementById('save-lb-btn'); sb.innerText = "✅"; sb.disabled = true; sb.style.opacity = "0.5"; openLeaderboard();
     }
 
     function openLeaderboard() {
         const c = document.getElementById('lb-content'); c.innerHTML = "";
-        if (realLeaderboard.length === 0) c.innerHTML = "<div style='text-align:center; padding: 20px; color: var(--text-dim);'>目前還沒有人上榜喔！</div>";
+        if (realLeaderboard.length === 0) c.innerHTML = "<div style='text-align:center; padding: 20px; color: var(--text-dim);'>No data yet!</div>";
         else realLeaderboard.forEach((p, i) => {
             const row = document.createElement('div'); row.className = 'lb-row'; if (p.name === playerName && p.roi === currentUserRoi) { row.style.color = 'var(--accent)'; row.style.fontWeight = 'bold'; }
             row.innerHTML = `<span>${i < 3 ? ['🥇','🥈','🥉'][i] : '#'+(i+1)}</span><span>${p.name} <small>(${p.coin})</small></span><span style="color:${p.roi >= 0 ? 'var(--up-color)' : 'var(--down-color)'}">${(p.roi > 0 ? "+" : "") + p.roi.toFixed(1)}%</span>`;
@@ -581,7 +741,7 @@
     }
 
     function closeLeaderboard() { document.getElementById('lb-modal').style.display = 'none'; }
-    window.onload = () => { rollName(); setTimeout(resizeCanvas, 100); };
+    window.onload = () => { changeLang('en'); rollName(); setTimeout(resizeCanvas, 100); };
 </script>
 </body>
 </html>
